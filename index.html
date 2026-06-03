@@ -341,7 +341,17 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
 
     <div class="lfoot">
       <span>ETI · LCI · SAI×SCI · MDS 2D</span>
-      <button class="enter-btn" onclick="openDash('p1')">Enter →</button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <a href="https://e74134079-hub.github.io/confucius-survey/" target="_blank"
+           style="font-family:var(--mono);font-size:11px;color:var(--g60);
+                  text-decoration:none;border:.5px solid var(--g20);
+                  padding:7px 14px;border-radius:2px;"
+           onmouseover="this.style.color='var(--ink)';this.style.borderColor='var(--g60)'"
+           onmouseout="this.style.color='var(--g60)';this.style.borderColor='var(--g20)'">
+          公眾調查 ↗
+        </a>
+        <button class="enter-btn" onclick="openDash('p1')">Enter →</button>
+      </div>
     </div>
   </div>
 
@@ -488,6 +498,14 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
     <span class="dsep">Service</span>
     <button class="dnb" data-panel="p6" onclick="showPanel('p6',this)">⑥ SAI × SCI</button>
     <button class="dback" onclick="backToLanding()">← Overview</button>
+    <a href="https://e74134079-hub.github.io/confucius-survey/" target="_blank"
+       style="flex-shrink:0;margin-left:8px;font-family:var(--mono);font-size:11px;
+              color:var(--g60);text-decoration:none;border:.5px solid var(--g20);
+              padding:4px 10px;border-radius:2px;white-space:nowrap;"
+       onmouseover="this.style.color='var(--ink)';this.style.borderColor='var(--g60)'"
+       onmouseout="this.style.color='var(--g60)';this.style.borderColor='var(--g20)'">
+      公眾調查 Survey ↗
+    </a>
   </div>
 
   <div class="dp active" id="p1">
