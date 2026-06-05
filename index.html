@@ -497,6 +497,8 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
     <button class="dnb" data-panel="p5" onclick="showPanel('p5',this)">⑤ LCI</button>
     <span class="dsep">Service</span>
     <button class="dnb" data-panel="p6" onclick="showPanel('p6',this)">⑥ SAI × SCI</button>
+    <span class="dsep">Public</span>
+    <button class="dnb" data-panel="p7" onclick="showPanel('p7',this)">⑦ PPI · 公眾感知</button>
     <button class="dback" onclick="backToLanding()">← Overview</button>
     <a href="https://e74134079-hub.github.io/confucius-survey/" target="_blank"
        style="flex-shrink:0;margin-left:8px;font-family:var(--mono);font-size:11px;
@@ -587,6 +589,24 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
     <div class="ptitle">Service — SAI × SCI</div>
     <div class="pdesc"><strong>SAI</strong>: multi-zone reach 0.35 · priority distance 0.30 · invisibility 0.20 · peak access 0.15<br><strong>SCI</strong>: dependency count 0.40 · substitutability(inv) 0.35 · failure radius 0.25<br>High SCI + Low SAI = GH warning (critical but inaccessible).</div>
     <div id="svcWrap"></div>
+  </div>
+
+  <!-- Panel 7: PPI -->
+  <div class="dp" id="p7">
+    <div class="pey">Public Perception · 07</div>
+    <div class="ptitle">PPI — <em>公眾感知指標</em></div>
+    <div class="pdesc">
+      即時從公眾調查讀取象限重心，計算對 ETI 維度權重的調整量。<br>
+      <strong>路徑 C：</strong>象限位置重分配五維度權重 ·
+      <strong>路徑 A：</strong>Y 軸調整 H 抑制、X 軸調整 S 抑制<br>
+      調整幅度 = 重心座標偏離零點的比例 × 最大調整量（±0.08）
+    </div>
+    <div id="p7content">
+      <div class="dbox" style="margin-bottom:18px">
+        正在讀取公眾調查資料...
+        <button onclick="loadPPI()" style="margin-left:12px;font-family:var(--acumin);font-size:11px;padding:4px 10px;border:.5px solid var(--g20);background:none;cursor:pointer;border-radius:2px;">重新整理 ↺</button>
+      </div>
+    </div>
   </div>
 
   <div class="dfoot">
@@ -990,5 +1010,212 @@ function closeLightbox(){
   document.body.style.overflow='';
 }
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLightbox();});
+
+
+// ════════════════════════════════════════════════════════
+// PANEL 7 — PPI  Public Perception Index
+// ════════════════════════════════════════════════════════
+const SB_PPI = "https://ywuamzusgtmydgvlsxpv.supabase.co";
+const SK_PPI = "sb_publishable_C4u8NgyKacE5SrByLCQWTA_rBTkdJYr";
+
+const BASE_W   = {V:0.30, D:0.25, F:0.18, U:0.15, O:0.12};
+const BASE_INH = {H:0.6, S:0.4};
+const MAX_ADJ  = 0.08;
+
+const Q_BOOST = {
+  'sens_crit': ['V','F'],
+  'rat_crit':  ['D','O'],
+  'sens_incl': ['U','O'],
+  'rat_incl':  ['D','F'],
+};
+const Q_LABELS = {
+  'sens_crit':'感性 × 批判',
+  'rat_crit': '理性 × 批判',
+  'sens_incl':'感性 × 包容',
+  'rat_incl': '理性 × 包容'
+};
+const DIM_LABELS = {V:'視覺複雜度',D:'功能密度',F:'功能穩定性',U:'使用自主性',O:'開放性'};
+
+function getQuadrant(cx, cy){
+  if(cx >= 0 && cy >= 0) return 'sens_crit';
+  if(cx <  0 && cy >= 0) return 'rat_crit';
+  if(cx >= 0 && cy <  0) return 'sens_incl';
+  return 'rat_incl';
+}
+
+function computePPI(cx, cy){
+  const nx = cx/5, ny = cy/5;
+  const dist = Math.sqrt(nx*nx + ny*ny);
+  const quad = getQuadrant(cx, cy);
+  const boosted = Q_BOOST[quad];
+  const boost = dist * MAX_ADJ;
+
+  const adj = {V:0,D:0,F:0,U:0,O:0};
+  boosted.forEach(d => adj[d] += boost);
+  const rest = ['V','D','F','U','O'].filter(d => !boosted.includes(d));
+  const perRest = (boost * 2) / 3;
+  rest.forEach(d => adj[d] -= perRest);
+
+  const newW = {};
+  ['V','D','F','U','O'].forEach(d => {
+    newW[d] = Math.max(0.04, Math.min(0.45, BASE_W[d] + adj[d]));
+  });
+  const total = Object.values(newW).reduce((s,v)=>s+v,0);
+  ['V','D','F','U','O'].forEach(d => newW[d] = +(newW[d]/total).toFixed(4));
+
+  // Path A: Y批判(+ny)→H↓, X感性(+nx)→S↓
+  const newH = Math.max(0.20, Math.min(0.85, BASE_INH.H - ny * 0.15));
+  const newS = Math.max(0.15, Math.min(0.65, BASE_INH.S - nx * 0.10));
+
+  return { cx, cy, nx, ny, dist, quad, boost, adj, newW, newH, newS };
+}
+
+function recomputeETI(prog, newW, newH, newS){
+  return prog.map(p => {
+    const v = p.v;
+    const posSum = newW.V*v[0] + newW.D*v[1] + newW.F*v[2] + newW.U*v[3] + newW.O*v[4];
+    const eti = posSum * (1 - newH*v[5]) * (1 - newS*v[6]);
+    return { ...p, eti_adj: +eti.toFixed(3), delta: +(eti - p.eti).toFixed(3) };
+  });
+}
+
+async function loadPPI(){
+  const box = document.getElementById('p7content');
+  box.innerHTML = '<div class="dbox">讀取中...</div>';
+  try{
+    const r = await fetch(SB_PPI+'/rest/v1/responses?select=x,y&limit=5000',{
+      headers:{'apikey':SK_PPI,'Authorization':'Bearer '+SK_PPI}
+    });
+    const rows = await r.json();
+    if(!Array.isArray(rows)||rows.length===0){
+      box.innerHTML='<div class="dbox">尚無調查資料。<button onclick="loadPPI()" style="margin-left:12px;font-family:var(--acumin);font-size:11px;padding:4px 10px;border:.5px solid var(--g20);background:none;cursor:pointer;border-radius:2px;">重試</button></div>';
+      return;
+    }
+    const cx = rows.reduce((s,d)=>s+d.x,0)/rows.length;
+    const cy = rows.reduce((s,d)=>s+d.y,0)/rows.length;
+    const ppi = computePPI(cx, cy);
+    const adjProg = recomputeETI(PROG, ppi.newW, ppi.newH, ppi.newS);
+    renderPPI(ppi, adjProg, rows.length);
+  }catch(e){
+    box.innerHTML='<div class="dbox">讀取失敗: '+e.message+'</div>';
+  }
+}
+
+function renderPPI(p, adjProg, n){
+  const DIMS = ['V','D','F','U','O'];
+  const qx = (p.cx+5)/10*180;
+  const qy = (1-(p.cy+5)/10)*180;
+  const boostNames = Q_BOOST[p.quad].map(d=>DIM_LABELS[d]).join(' · ');
+
+  let html = '<div class="two-col" style="margin-bottom:18px">';
+
+  // ── LEFT: quadrant viz + summary ──
+  html += '<div class="card"><div class="cey">公眾感知重心 Public Centroid</div>';
+  html += '<svg viewBox="0 0 180 180" width="180" style="display:block;margin:0 auto 12px">';
+  html += '<rect x="0" y="0" width="90" height="90" fill="#fff7ed" opacity=".5"/>';
+  html += '<rect x="90" y="0" width="90" height="90" fill="#eff6ff" opacity=".5"/>';
+  html += '<rect x="0" y="90" width="90" height="90" fill="#f0fdf4" opacity=".5"/>';
+  html += '<rect x="90" y="90" width="90" height="90" fill="#fdf4ff" opacity=".5"/>';
+  html += '<line x1="90" y1="0" x2="90" y2="180" stroke="#d4d2ce" stroke-width=".8"/>';
+  html += '<line x1="0" y1="90" x2="180" y2="90" stroke="#d4d2ce" stroke-width=".8"/>';
+  html += '<text x="90" y="10" text-anchor="middle" font-size="8" fill="#9c9894" font-family="Inter,sans-serif">批判</text>';
+  html += '<text x="90" y="176" text-anchor="middle" font-size="8" fill="#9c9894" font-family="Inter,sans-serif">包容</text>';
+  html += '<text x="4" y="93" font-size="8" fill="#9c9894" font-family="Inter,sans-serif">理性</text>';
+  html += '<text x="145" y="93" font-size="8" fill="#9c9894" font-family="Inter,sans-serif">感性</text>';
+  var ringR = (p.dist/1.414)*60;
+  html += '<circle cx="90" cy="90" r="'+ringR+'" fill="none" stroke="#ac1917" stroke-width=".6" opacity=".2"/>';
+  html += '<line x1="'+qx+'" y1="0" x2="'+qx+'" y2="180" stroke="#ac1917" stroke-width=".5" stroke-dasharray="3,3" opacity=".4"/>';
+  html += '<line x1="0" y1="'+qy+'" x2="180" y2="'+qy+'" stroke="#ac1917" stroke-width=".5" stroke-dasharray="3,3" opacity=".4"/>';
+  html += '<rect x="'+(qx-5)+'" y="'+(qy-5)+'" width="10" height="10" fill="#ac1917"/>';
+  html += '<rect x="'+(qx-2)+'" y="'+(qy-2)+'" width="4" height="4" fill="#fff"/>';
+  html += '</svg>';
+
+  var hDir = p.newH < BASE_INH.H ? '↓ 歷史幾何約束減弱' : '↑ 更服從孔廟軸線';
+  var sDir = p.newS < BASE_INH.S ? '↓ 空間旋轉散佈增加' : '↑ 空間更收斂';
+  html += '<div class="dbox">';
+  html += '<b>n = '+n+' 筆回應</b><br>';
+  html += '重心：('+p.cx.toFixed(2)+', '+p.cy.toFixed(2)+')<br>';
+  html += '主要象限：<b>'+Q_LABELS[p.quad]+'</b><br>';
+  html += '偏離強度：'+(p.dist/1.414*100).toFixed(0)+'%<br><br>';
+  html += '強化維度：<b>'+boostNames+'</b><br>';
+  html += 'H 抑制：'+BASE_INH.H.toFixed(2)+' → <b>'+p.newH.toFixed(2)+'</b> '+hDir+'<br>';
+  html += 'S 抑制：'+BASE_INH.S.toFixed(2)+' → <b>'+p.newS.toFixed(2)+'</b> '+sDir;
+  html += '</div></div>';
+
+  // ── RIGHT: weight bars ──
+  html += '<div class="card"><div class="cey">維度權重調整 Weight Shift</div>';
+  DIMS.forEach(function(d){
+    var base = BASE_W[d], adj = p.newW[d], delta = adj - base;
+    var pctBase = base*100, pctAdj = adj*100;
+    var clr = delta > 0 ? '#ac1917' : '#6b6864';
+    var sign = delta >= 0 ? '+' : '';
+    html += '<div style="margin-bottom:12px">';
+    html += '<div style="display:flex;justify-content:space-between;margin-bottom:4px">';
+    html += '<span style="font-size:12px;font-weight:500">'+d+' <span style="font-weight:300;color:var(--g60)">'+DIM_LABELS[d]+'</span></span>';
+    html += '<span style="font-family:var(--mono);font-size:11px;color:'+clr+'">'+sign+(delta*100).toFixed(1)+'%</span>';
+    html += '</div>';
+    html += '<div style="position:relative;height:6px;background:var(--g10);border-radius:3px">';
+    html += '<div style="position:absolute;left:0;top:0;height:100%;width:'+pctBase+'%;background:var(--g40);border-radius:3px;opacity:.4"></div>';
+    html += '<div style="position:absolute;left:0;top:0;height:100%;width:'+pctAdj+'%;background:'+clr+';border-radius:3px"></div>';
+    html += '</div>';
+    html += '<div style="display:flex;justify-content:space-between;margin-top:2px;font-family:var(--mono);font-size:9px;color:var(--g40)">';
+    html += '<span>基礎 '+pctBase.toFixed(1)+'%</span><span>調整後 '+pctAdj.toFixed(1)+'%</span></div></div>';
+  });
+  html += '</div></div>';
+
+  // ── ETI delta per programme ──
+  var sorted = adjProg.slice().sort(function(a,b){return b.delta-a.delta;});
+  var maxDelta = Math.max.apply(null, adjProg.map(function(x){return Math.abs(x.delta);})) || 1;
+  html += '<div class="card" style="margin-top:18px"><div class="cey">ETI 調整量 Per Programme</div>';
+  html += '<div style="font-size:11px;color:var(--g60);margin-bottom:14px;font-family:var(--mono)">紅色 = ETI 上升（被強化）· 灰色 = 下降（被弱化）</div>';
+
+  sorted.forEach(function(prog){
+    var bw = Math.abs(prog.delta)/maxDelta * 200;
+    var clr = prog.delta >= 0 ? '#ac1917' : '#6b6864';
+    var zclr = ZC[prog.z];
+    var sign = prog.delta >= 0 ? '+' : '';
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding-bottom:6px;border-bottom:.5px solid var(--g10)">';
+    html += '<div style="width:130px;font-size:11px;font-style:italic;color:'+zclr+';flex-shrink:0;text-align:right">'+prog.n+'</div>';
+    html += '<div style="width:8px;height:8px;border-radius:50%;background:'+zclr+';flex-shrink:0"></div>';
+    html += '<div style="position:relative;flex:1;height:8px;background:var(--g10);border-radius:2px">';
+    html += '<div style="position:absolute;left:0;top:0;width:'+bw+'px;height:100%;background:'+clr+';border-radius:2px"></div>';
+    html += '</div>';
+    html += '<div style="font-family:var(--mono);font-size:10px;color:'+clr+';width:46px">'+sign+prog.delta.toFixed(3)+'</div>';
+    html += '<div style="font-family:var(--mono);font-size:10px;color:var(--g60);width:36px">&rarr;'+prog.eti_adj.toFixed(2)+'</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // ── Rank shift + GH params ──
+  var origRanked = PROG.slice().sort(function(a,b){return b.eti-a.eti;});
+  var adjRanked  = adjProg.slice().sort(function(a,b){return b.eti_adj-a.eti_adj;});
+  var movers = adjProg.slice().sort(function(a,b){return Math.abs(b.delta)-Math.abs(a.delta);}).slice(0,5);
+
+  html += '<div class="card" style="margin-top:18px"><div class="cey">機能排序變動 · GH 建議參數</div>';
+  html += '<div class="dbox"><b>ETI 排名變動最大的機能：</b><br>';
+  movers.forEach(function(m){
+    var or = origRanked.findIndex(function(x){return x.n===m.n;})+1;
+    var ar = adjRanked.findIndex(function(x){return x.n===m.n;})+1;
+    var rc = or - ar;
+    var rcStr = rc>0 ? ' ↑'+rc : (rc<0 ? ' ↓'+Math.abs(rc) : ' −');
+    html += m.n + '：' + m.eti.toFixed(2) + ' → ' + m.eti_adj.toFixed(2) + '　#'+or+' → #'+ar+rcStr+'<br>';
+  });
+  var sfSuggested = (1.0 + p.nx * 0.4).toFixed(2);
+  var maSuggested = (p.ny * 0.15).toFixed(3);
+  html += '<br><b>GH 參數建議：</b><br>';
+  html += 'scatter_factor → ' + sfSuggested + '　（感性↑ 散佈增加）<br>';
+  html += 'mds_angle 偏移 → ' + maSuggested + ' rad　（批判↑ 微調旋轉）<br>';
+  html += '<br><a href="https://e74134079-hub.github.io/confucius-survey/" target="_blank" style="color:#1887ab;font-size:11px">→ 開啟公眾調查網站</a>';
+  html += '</div></div>';
+
+  document.getElementById('p7content').innerHTML = html;
+}
+
+// Auto-load when switching to p7
+const _origShowPanel = showPanel;
+showPanel = function(id, btn){
+  _origShowPanel(id, btn);
+  if(id==='p7') loadPPI();
+};
 
 </script></body></html>
