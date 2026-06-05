@@ -1208,7 +1208,20 @@ function renderPPI(p, adjProg, n){
   html += '<br><a href="https://e74134079-hub.github.io/confucius-survey/" target="_blank" style="color:#1887ab;font-size:11px">→ 開啟公眾調查網站</a>';
   html += '</div></div>';
 
+  // Radial card
+  html += '<div class="card" style="margin-top:18px">';
+  html += '<div class="cey">Radial Diagram — 公眾調整後 Adjusted ETI</div>';
+  html += '<div class="two-col"><div><svg id="p7RadialSvg" viewBox="0 0 560 500" width="100%"></svg></div>';
+  html += '<div><div style="font-size:12px;font-family:var(--mono);color:var(--g60);line-height:1.9;margin-bottom:14px">';
+  html += '實線 = 調整後 ETI<br>虛線環 = 調整前<br>物件大小 ∝ 調整後 ETI<br>';
+  html += '紅色位移 = 上升；灰色 = 下降</div>';
+  html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:11px;color:var(--g60)"><div style="width:9px;height:9px;border-radius:50%;background:var(--A);flex-shrink:0"></div>A 工藝修復</div>';
+  html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:11px;color:var(--g60)"><div style="width:9px;height:9px;border-radius:50%;background:var(--B);flex-shrink:0"></div>B 學習</div>';
+  html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:11px;color:var(--g60)"><div style="width:9px;height:9px;border-radius:50%;background:var(--C);flex-shrink:0"></div>C 展演</div>';
+  html += '</div></div></div>';
+
   document.getElementById('p7content').innerHTML = html;
+  drawAdjRadial(adjProg, 'p7RadialSvg');
 }
 
 // Auto-load when switching to p7
@@ -1217,5 +1230,108 @@ showPanel = function(id, btn){
   _origShowPanel(id, btn);
   if(id==='p7') loadPPI();
 };
+
+
+// ── drawAdjRadial: radial diagram using adjusted ETI ─────────────
+function drawAdjRadial(adjProg, svgId){
+  const svg = document.getElementById(svgId);
+  if(!svg) return;
+  svg.innerHTML = '';
+
+  const VW=560, VH=500, CX=VW/2, CY=VH/2, R=Math.min(VW,VH)/2-56;
+
+  function px(n){ return CX + n.x*R; }
+  function py(n){ return CY + n.y*R; }
+
+  // base radius from adjusted ETI
+  function nr(n){ return Math.max(11, Math.min(26, 11 + n.eti_adj*14 + (n.fusion||0)*0.5)); }
+  // original radius for ghost ring
+  function nr0(n){ return Math.max(11, Math.min(26, 11 + n.eti*14 + (n.fusion||0)*0.5)); }
+
+  // background grid
+  for(let v=-1;v<=1;v+=.5){
+    const xv=CX+v*R, yv=CY+v*R;
+    se('line',{x1:xv,y1:CY-R,x2:xv,y2:CY+R,stroke:'#e8e6e2','stroke-width':'.3'},svg);
+    se('line',{x1:CX-R,y1:yv,x2:CX+R,y2:yv,stroke:'#e8e6e2','stroke-width':'.3'},svg);
+  }
+  se('line',{x1:CX,y1:CY-R-8,x2:CX,y2:CY+R+8,stroke:'#d4d2ce','stroke-width':'.5'},svg);
+  se('line',{x1:CX-R-8,y1:CY,x2:CX+R+8,y2:CY,stroke:'#d4d2ce','stroke-width':'.5'},svg);
+
+  // axis label
+  st(CX,VH-6,'← Temple axis  ·  City interface →',
+    {'text-anchor':'middle','font-family':ACUMIN,'font-size':'9','fill':'#9c9894'},svg);
+
+  // edges (programme relationships — unchanged)
+  adjProg.forEach((pi,ii)=>adjProg.forEach((pj,jj)=>{
+    if(ii>=jj) return;
+    const ri=PROG.findIndex(p=>p.n===pi.n), rj=PROG.findIndex(p=>p.n===pj.n);
+    if(ri<0||rj<0) return;
+    const r=relM[ri][rj]; if(!r||r==='NEUTRAL') return;
+    const stroke = r==='COMPLEMENT'?'#4c4948': r==='CONFLICT'?'#b0ada8':'#d4d2ce';
+    const dash   = r==='CONFLICT'?'4,3':'';
+    se('line',{x1:px(pi),y1:py(pi),x2:px(pj),y2:py(pj),
+      stroke,'stroke-width':'.5','stroke-dasharray':dash,opacity:'.18'},svg);
+  }));
+
+  // nodes
+  adjProg.forEach((n)=>{
+    const x=px(n), y=py(n);
+    const r2=nr(n), r0=nr0(n);
+    const zc=ZC[n.z], zcl=ZCL[n.z];
+    const rose  = n.delta > 0;
+    const fell  = n.delta < 0;
+    const g=document.createElementNS(NS,'g');
+    g.style.cursor='pointer';
+
+    // ghost ring = original size
+    if(Math.abs(n.delta)>0.005){
+      se('circle',{cx:x,cy:y,r:r0,fill:'none',stroke:zc,'stroke-width':'.6',
+        'stroke-dasharray':'3,2',opacity:'.35'},g);
+    }
+
+    // shift arrow for top movers
+    if(Math.abs(n.delta)>0.015){
+      const arrowClr = rose ? '#ac1917' : '#9c9894';
+      const dr = r2-r0;
+      if(Math.abs(dr)>0.5){
+        se('line',{x1:x,y1:y-(r0+2),x2:x,y2:y-(r2+2),
+          stroke:arrowClr,'stroke-width':'1.2',
+          'marker-end':rose?'url(#arrowUp)':'url(#arrowDown)'},g);
+      }
+    }
+
+    // main circle with adjusted size
+    se('circle',{cx:x,cy:y,r:r2,fill:zcl,stroke:zc,'stroke-width':'.5'},g);
+
+    // delta badge
+    if(Math.abs(n.delta)>0.01){
+      const badgeClr = rose ? '#ac1917' : '#6b6864';
+      const sign     = rose ? '+' : '';
+      const bx=x+r2+2, by=y-r2;
+      se('rect',{x:bx-1,y:by-8,width:28,height:10,fill:badgeClr,rx:1,opacity:'.85'},g);
+      st(bx+12,by-3,sign+n.delta.toFixed(2),
+        {'text-anchor':'middle','font-family':ACUMIN,'font-size':'6.5','fill':'#fff'},g);
+    }
+
+    // name label
+    const words=n.n.split(' ');
+    const fsz=Math.max(5.5,Math.min(8,(r2*1.6)/Math.max(...words.map(w=>w.length))*1.5));
+    if(words.length>=3&&r2>=14){
+      const m=Math.ceil(words.length/2);
+      st(x,y-fsz*.55,words.slice(0,m).join(' '),
+        {'text-anchor':'middle','font-family':ACUMIN,'font-size':fsz,'fill':zc,'font-style':'italic'},g);
+      st(x,y+fsz*.9,words.slice(m).join(' '),
+        {'text-anchor':'middle','font-family':ACUMIN,'font-size':fsz,'fill':zc,'font-style':'italic'},g);
+    } else {
+      const short=n.n.length>12?n.n.slice(0,11)+'.':n.n;
+      st(x,y+fsz*.4,short,
+        {'text-anchor':'middle','font-family':ACUMIN,'font-size':fsz,'fill':zc,'font-style':'italic'},g);
+    }
+    st(x,y+r2+10,n.eti_adj.toFixed(2),
+      {'text-anchor':'middle','font-family':MONO,'font-size':'8.5','fill':zc},g);
+
+    svg.appendChild(g);
+  });
+}
 
 </script></body></html>
