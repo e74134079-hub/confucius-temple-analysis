@@ -1123,23 +1123,25 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLightbo
 const SB_PPI = "https://ywuamzusgtmydgvlsxpv.supabase.co";
 const SK_PPI = "sb_publishable_C4u8NgyKacE5SrByLCQWTA_rBTkdJYr";
 
-const BASE_W   = {V:0.30, D:0.25, F:0.18, U:0.15, O:0.12};
 const BASE_INH = {H:0.6, S:0.4};
-const MAX_ADJ  = 0.08;
-
-const Q_BOOST = {
-  'sens_crit': ['V','F'],
-  'rat_crit':  ['D','O'],
-  'sens_incl': ['U','O'],
-  'rat_incl':  ['D','F'],
-};
+const DIM_LABELS = {V:'Visual Complexity',D:'Functional Density',F:'Functional Stability',U:'User Agency',O:'Openness'};
 const Q_LABELS = {
-  'sens_crit':'感性 × 批判',
-  'rat_crit': '理性 × 批判',
-  'sens_incl':'感性 × 包容',
-  'rat_incl': '理性 × 包容'
+  'sens_crit':'Sensibility × Criticality',
+  'rat_crit': 'Rationality × Criticality',
+  'sens_incl':'Sensibility × Inclusivity',
+  'rat_incl': 'Rationality × Inclusivity'
 };
-const DIM_LABELS = {V:'視覺複雜度',D:'功能密度',F:'功能穩定性',U:'使用自主性',O:'開放性'};
+
+// Social expectation ideal vectors I per quadrant
+// These represent what the public EXPECTS the space to be,
+// translated into ETI dimension language.
+// Keys: V=visual complexity, D=density, F=stability, U=agency, O=openness
+const IDEAL_VECTORS = {
+  'sens_crit': {V:0.90, F:0.70, O:0.65, U:0.30, D:0.20},
+  'rat_crit':  {D:0.85, O:0.90, F:0.40, U:0.20, V:0.20},
+  'sens_incl': {V:0.75, U:0.90, O:0.65, F:0.30, D:0.20},
+  'rat_incl':  {D:0.90, F:0.85, U:0.40, O:0.20, V:0.20},
+};
 
 function getQuadrant(cx, cy){
   if(cx >= 0 && cy >= 0) return 'sens_crit';
@@ -1150,37 +1152,63 @@ function getQuadrant(cx, cy){
 
 function computePPI(cx, cy){
   const nx = cx/5, ny = cy/5;
-  const dist = Math.sqrt(nx*nx + ny*ny);
+  const dist = Math.sqrt(nx*nx + ny*ny); // 0 to sqrt(2)
+
   const quad = getQuadrant(cx, cy);
-  const boosted = Q_BOOST[quad];
-  const boost = dist * MAX_ADJ;
 
-  const adj = {V:0,D:0,F:0,U:0,O:0};
-  boosted.forEach(d => adj[d] += boost);
-  const rest = ['V','D','F','U','O'].filter(d => !boosted.includes(d));
-  const perRest = (boost * 2) / 3;
-  rest.forEach(d => adj[d] -= perRest);
+  // Get the two bounding quadrant ideal vectors and interpolate
+  // based on exact (nx, ny) position within the quadrant
+  const I_base = IDEAL_VECTORS[quad];
 
-  const newW = {};
+  // Scale the ideal vector by distance from origin
+  // Near centre = weak social expectation; far = strong
+  const strength = Math.min(dist / 1.414, 1.0); // normalise 0-1
+
+  // Interpolate between neutral (all equal = 0.2) and the ideal vector
+  const NEUTRAL = {V:0.20, D:0.20, F:0.20, U:0.20, O:0.20};
+  const I = {};
   ['V','D','F','U','O'].forEach(d => {
-    newW[d] = Math.max(0.04, Math.min(0.45, BASE_W[d] + adj[d]));
+    I[d] = NEUTRAL[d] + (I_base[d] - NEUTRAL[d]) * strength;
   });
-  const total = Object.values(newW).reduce((s,v)=>s+v,0);
-  ['V','D','F','U','O'].forEach(d => newW[d] = +(newW[d]/total).toFixed(4));
 
-  // Path A: Y批判(+ny)→H↓, X感性(+nx)→S↓
-  const newH = Math.max(0.20, Math.min(0.85, BASE_INH.H - ny * 0.15));
-  const newS = Math.max(0.15, Math.min(0.65, BASE_INH.S - nx * 0.10));
+  // Path A: Criticality(+ny) reduces H (breaks temple geometry)
+  //         Inclusivity(-ny) increases H (respects temple geometry)
+  //         Sensibility(+nx) reduces S (spatial scatter increases)
+  //         Rationality(-nx) increases S (spatial order tighter)
+  const newH = Math.max(0.20, Math.min(0.85, BASE_INH.H - ny * 0.25));
+  const newS = Math.max(0.15, Math.min(0.65, BASE_INH.S - nx * 0.20));
 
-  return { cx, cy, nx, ny, dist, quad, boost, adj, newW, newH, newS };
+  return { cx, cy, nx, ny, dist, quad, strength, I, newH, newS };
 }
 
-function recomputeETI(prog, newW, newH, newS){
+function recomputeETI(prog, ppi){
+  const I = ppi.I;
+  const DIMS = ['V','D','F','U','O'];
+
+  // Cosine similarity between programme vector and ideal vector I
+  function cosineSim(v_arr, ideal){
+    const vVec = [v_arr[0], v_arr[1], v_arr[2], v_arr[3], v_arr[4]];
+    const iVec = DIMS.map(d => ideal[d]);
+    const dot   = vVec.reduce((s,vi,i) => s + vi*iVec[i], 0);
+    const magV  = Math.sqrt(vVec.reduce((s,vi) => s + vi*vi, 0));
+    const magI  = Math.sqrt(iVec.reduce((s,ii) => s + ii*ii, 0));
+    if(magV < 1e-9 || magI < 1e-9) return 0;
+    return dot / (magV * magI); // 0 to 1
+  }
+
   return prog.map(p => {
     const v = p.v;
-    const posSum = newW.V*v[0] + newW.D*v[1] + newW.F*v[2] + newW.U*v[3] + newW.O*v[4];
-    const eti = posSum * (1 - newH*v[5]) * (1 - newS*v[6]);
-    return { ...p, eti_adj: +eti.toFixed(3), delta: +(eti - p.eti).toFixed(3) };
+    // Public ETI = how well this programme satisfies public spatial expectation
+    const sim    = cosineSim(v, I);
+    // Apply inhibitors: H reduces programmes deeply tied to temple history
+    //                   S reduces programmes with high social fusion
+    const eti_pub = sim * (1 - ppi.newH * v[5]) * (1 - ppi.newS * v[6]);
+    const eti_adj = +eti_pub.toFixed(3);
+    // Delta vs original ETI (normalise original to same 0-1 scale first)
+    // Original ETI max is roughly 0.5 — we scale for fair comparison
+    const eti_orig_norm = Math.min(p.eti / 0.5, 1.0);
+    const delta = +(eti_adj - eti_orig_norm).toFixed(3);
+    return { ...p, eti_adj, delta, sim: +sim.toFixed(3) };
   });
 }
 
@@ -1199,7 +1227,7 @@ async function loadPPI(){
     const cx = rows.reduce((s,d)=>s+d.x,0)/rows.length;
     const cy = rows.reduce((s,d)=>s+d.y,0)/rows.length;
     const ppi = computePPI(cx, cy);
-    const adjProg = recomputeETI(PROG, ppi.newW, ppi.newH, ppi.newS);
+    const adjProg = recomputeETI(PROG, ppi);
     renderPPI(ppi, adjProg, rows.length);
   }catch(e){
     box.innerHTML='<div class="dbox">讀取失敗: '+e.message+'</div>';
@@ -1210,7 +1238,8 @@ function renderPPI(p, adjProg, n){
   const DIMS = ['V','D','F','U','O'];
   const qx = (p.cx+5)/10*180;
   const qy = (1-(p.cy+5)/10)*180;
-  const boostNames = Q_BOOST[p.quad].map(d=>DIM_LABELS[d]).join(' · ');
+  const sortedByI=['V','D','F','U','O'].sort((a,b)=>p.I[b]-p.I[a]);
+  const boostNames=sortedByI.slice(0,2).map(d=>d+' '+DIM_LABELS[d]).join(' · ');
 
   let html = '<div class="two-col" style="margin-bottom:18px">';
 
@@ -1235,37 +1264,49 @@ function renderPPI(p, adjProg, n){
   html += '<rect x="'+(qx-2)+'" y="'+(qy-2)+'" width="4" height="4" fill="#fff"/>';
   html += '</svg>';
 
-  var hDir = p.newH < BASE_INH.H ? '↓ 歷史幾何約束減弱' : '↑ 更服從孔廟軸線';
-  var sDir = p.newS < BASE_INH.S ? '↓ 空間旋轉散佈增加' : '↑ 空間更收斂';
   html += '<div class="dbox">';
-  html += '<b>n = '+n+' 筆回應</b><br>';
-  html += '重心：('+p.cx.toFixed(2)+', '+p.cy.toFixed(2)+')<br>';
-  html += '主要象限：<b>'+Q_LABELS[p.quad]+'</b><br>';
-  html += '偏離強度：'+(p.dist/1.414*100).toFixed(0)+'%<br><br>';
-  html += '強化維度：<b>'+boostNames+'</b><br>';
-  html += 'H 抑制：'+BASE_INH.H.toFixed(2)+' → <b>'+p.newH.toFixed(2)+'</b> '+hDir+'<br>';
-  html += 'S 抑制：'+BASE_INH.S.toFixed(2)+' → <b>'+p.newS.toFixed(2)+'</b> '+sDir;
+  html += '<b>n = '+n+' responses</b><br>';
+  html += 'Centroid: ('+p.cx.toFixed(2)+', '+p.cy.toFixed(2)+')<br>';
+  html += 'Dominant quadrant: <b>'+Q_LABELS[p.quad]+'</b><br>';
+  html += 'Expectation strength: <b>'+(p.strength*100).toFixed(0)+'%</b><br><br>';
+  html += 'Highest expected dims: <b>';
+  var sortedI = ['V','D','F','U','O'].sort(function(a,b){return p.I[b]-p.I[a];});
+  html += sortedI.slice(0,2).map(function(d){return d+' '+DIM_LABELS[d];}).join(' · ');
+  html += '</b><br>';
+  html += 'H: '+BASE_INH.H.toFixed(2)+' → <b>'+p.newH.toFixed(2)+'</b>';
+  html += (p.newH < BASE_INH.H ? ' ↓ temple geometry released' : ' ↑ temple axis respected')+'<br>';
+  html += 'S: '+BASE_INH.S.toFixed(2)+' → <b>'+p.newS.toFixed(2)+'</b>';
+  html += (p.newS < BASE_INH.S ? ' ↓ scatter increases' : ' ↑ order tighter');
   html += '</div></div>';
 
-  // ── RIGHT: weight bars ──
-  html += '<div class="card"><div class="cey">維度權重調整 Weight Shift</div>';
+  // ── RIGHT: ideal vector bars ──
+  html += '<div class="card"><div class="cey">Social Expectation Vector I</div>';
+  html += '<div style="font-size:11px;color:var(--g60);font-family:var(--mono);margin-bottom:14px;line-height:1.7">';
+  html += 'Strength: <b style="color:var(--ink)">'+(p.strength*100).toFixed(0)+'%</b> (distance from centre)<br>';
+  html += 'The public centroid defines what dimensions<br>they expect this space to prioritise.</div>';
   DIMS.forEach(function(d){
-    var base = BASE_W[d], adj = p.newW[d], delta = adj - base;
-    var pctBase = base*100, pctAdj = adj*100;
-    var clr = delta > 0 ? '#ac1917' : '#6b6864';
-    var sign = delta >= 0 ? '+' : '';
-    html += '<div style="margin-bottom:12px">';
-    html += '<div style="display:flex;justify-content:space-between;margin-bottom:4px">';
+    var val = p.I[d];
+    var pct = val * 100;
+    // colour: how much this dim is expected — high = red, low = grey
+    var intensity = (val - 0.20) / 0.70; // 0 at neutral, 1 at max
+    var clr = intensity > 0.3 ? '#ac1917' : '#6b6864';
+    html += '<div style="margin-bottom:10px">';
+    html += '<div style="display:flex;justify-content:space-between;margin-bottom:3px">';
     html += '<span style="font-size:12px;font-weight:500">'+d+' <span style="font-weight:300;color:var(--g60)">'+DIM_LABELS[d]+'</span></span>';
-    html += '<span style="font-family:var(--mono);font-size:11px;color:'+clr+'">'+sign+(delta*100).toFixed(1)+'%</span>';
+    html += '<span style="font-family:var(--mono);font-size:11px;color:'+clr+'">'+val.toFixed(2)+'</span>';
     html += '</div>';
-    html += '<div style="position:relative;height:6px;background:var(--g10);border-radius:3px">';
-    html += '<div style="position:absolute;left:0;top:0;height:100%;width:'+pctBase+'%;background:var(--g40);border-radius:3px;opacity:.4"></div>';
-    html += '<div style="position:absolute;left:0;top:0;height:100%;width:'+pctAdj+'%;background:'+clr+';border-radius:3px"></div>';
-    html += '</div>';
-    html += '<div style="display:flex;justify-content:space-between;margin-top:2px;font-family:var(--mono);font-size:9px;color:var(--g40)">';
-    html += '<span>基礎 '+pctBase.toFixed(1)+'%</span><span>調整後 '+pctAdj.toFixed(1)+'%</span></div></div>';
+    html += '<div style="position:relative;height:5px;background:var(--g10);border-radius:3px">';
+    // neutral baseline at 20%
+    html += '<div style="position:absolute;left:0;top:0;height:100%;width:20%;background:var(--g20);border-radius:3px"></div>';
+    html += '<div style="position:absolute;left:0;top:0;height:100%;width:'+pct+'%;background:'+clr+';border-radius:3px;opacity:.8"></div>';
+    html += '</div></div>';
   });
+  html += '<div style="margin-top:14px;padding-top:12px;border-top:.5px solid var(--g10);font-family:var(--mono);font-size:11px;color:var(--g60)">';
+  html += 'H inhibitor: '+BASE_INH.H.toFixed(2)+' → <b style="color:var(--ink)">'+p.newH.toFixed(2)+'</b>';
+  html += (p.newH < BASE_INH.H ? ' ↓ temple geometry released' : ' ↑ temple axis respected')+'<br>';
+  html += 'S inhibitor: '+BASE_INH.S.toFixed(2)+' → <b style="color:var(--ink)">'+p.newS.toFixed(2)+'</b>';
+  html += (p.newS < BASE_INH.S ? ' ↓ column scatter increases' : ' ↑ spatial order tighter');
+  html += '</div>';
   html += '</div></div>';
 
   // ── ETI delta per programme ──
