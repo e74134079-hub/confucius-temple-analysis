@@ -142,6 +142,14 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
 .dnb:hover{color:var(--ink);}
 .dnb.active{color:var(--ink);border-bottom-color:var(--ink);}
 .dsep{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--g40);padding:0 8px;border-left:.5px solid var(--g20);margin-left:4px;height:44px;display:flex;align-items:center;white-space:nowrap;flex-shrink:0;}
+.dnav-l1{display:flex;align-items:center;gap:0;border-right:.5px solid var(--g20);margin-right:8px;padding-right:8px;}
+.dl1{font-family:var(--acumin);font-size:11px;letter-spacing:.04em;padding:0 12px;height:44px;border:none;background:transparent;cursor:pointer;color:var(--g60);border-bottom:2px solid transparent;transition:all .12s;white-space:nowrap;}
+.dl1:hover{color:var(--ink);}
+.dl1.active{color:var(--ink);border-bottom-color:var(--ink);}
+.dnav-l2{display:none;align-items:center;gap:0;}
+.dnav-l2.active{display:flex;}
+.dnb-link{font-family:var(--acumin);font-size:11px;color:var(--g60);text-decoration:none;padding:0 12px;height:44px;display:flex;align-items:center;border-bottom:2px solid transparent;}
+.dnb-link:hover{color:var(--ink);}
 .dback{margin-left:auto;font-family:var(--mono);font-size:var(--fs-xs);color:var(--g60);background:none;border:.5px solid var(--g20);cursor:pointer;padding:5px 11px;border-radius:2px;flex-shrink:0;}
 .dback:hover{color:var(--ink);border-color:var(--g60);}
 .dp{display:none;padding:24px 28px 56px;}
@@ -173,6 +181,12 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
 .leg-r{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
 .leg-sw{width:12px;height:12px;border-radius:1px;flex-shrink:0;}
 .leg-t{font-size:var(--fs-sm);font-weight:300;color:var(--g60);}
+.sec-tabs{display:flex;align-items:center;gap:0;border-bottom:.5px solid var(--g20);margin-bottom:24px;padding-bottom:0;}
+.sec-tab{font-family:var(--acumin);font-size:11px;letter-spacing:.04em;padding:8px 16px;border:none;background:none;cursor:pointer;color:var(--g60);border-bottom:2px solid transparent;transition:all .12s;}
+.sec-tab:hover{color:var(--ink);}
+.sec-tab.active{color:var(--ink);border-bottom-color:var(--ink);}
+.sec-page{display:none;}
+.sec-page.active{display:block;}
 .dbox{background:var(--g05);border:.5px solid var(--g10);border-radius:2px;padding:10px 12px;font-family:var(--mono);font-size:var(--fs-sm);color:var(--g60);line-height:1.75;min-height:44px;}
 .dbox b{color:var(--ink);font-weight:500;font-family:var(--acumin);}
 .cr{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;}
@@ -487,27 +501,36 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
 <!-- ═══ DASHBOARD ═══ -->
 <div id="dashboard">
   <div class="dh">
-    <span class="dw">Confucius Temple — Programme Analysis</span>
-    <span class="dsep">Programme</span>
-    <button class="dnb active" data-panel="p1" onclick="showPanel('p1',this)">① ETI + Distance</button>
-    <button class="dnb" data-panel="p2" onclick="showPanel('p2',this)">② Relationship Matrix</button>
-    <button class="dnb" data-panel="p3" onclick="showPanel('p3',this)">③ Radial — Programme</button>
-    <button class="dnb" data-panel="p4" onclick="showPanel('p4',this)">④ Radial — All</button>
-    <span class="dsep">Landscape</span>
-    <button class="dnb" data-panel="p5" onclick="showPanel('p5',this)">⑤ LCI</button>
-    <span class="dsep">Service</span>
-    <button class="dnb" data-panel="p6" onclick="showPanel('p6',this)">⑥ SAI × SCI</button>
-    <span class="dsep">Public</span>
-    <button class="dnb" data-panel="p7" onclick="showPanel('p7',this)">⑦ PPI · 公眾感知</button>
+    <!-- Level 1: main nav -->
+    <span class="dw">Confucius Temple</span>
+    <div class="dnav-l1">
+      <button class="dl1 active" data-group="programme" onclick="toggleGroup('programme',this)">Programme</button>
+      <button class="dl1" data-group="landscape" onclick="toggleGroup('landscape',this)">Landscape</button>
+      <button class="dl1" data-group="service" onclick="toggleGroup('service',this)">Service</button>
+      <button class="dl1" data-group="public" onclick="toggleGroup('public',this)">Public</button>
+      <button class="dl1" data-group="gh" onclick="toggleGroup('gh',this)">Generating Columns</button>
+    </div>
+    <!-- Level 2: sub-nav per group -->
+    <div class="dnav-l2 active" id="grp-programme">
+      <button class="dnb active" data-panel="p1" onclick="showPanel('p1',this)">① ETI</button>
+      <button class="dnb" data-panel="p2" onclick="showPanel('p2',this)">② Matrix</button>
+      <button class="dnb" data-panel="p3" onclick="showPanel('p3',this)">③ Radial — Programme</button>
+      <button class="dnb" data-panel="p4" onclick="showPanel('p4',this)">④ Radial — All</button>
+    </div>
+    <div class="dnav-l2" id="grp-landscape">
+      <button class="dnb" data-panel="p5" onclick="showPanel('p5',this)">⑤ LCI</button>
+    </div>
+    <div class="dnav-l2" id="grp-service">
+      <button class="dnb" data-panel="p6" onclick="showPanel('p6',this)">⑥ SAI × SCI</button>
+    </div>
+    <div class="dnav-l2" id="grp-public">
+      <button class="dnb" data-panel="p7" onclick="showPanel('p7',this)">⑦ PPI — Public Perception</button>
+      <a href="https://e74134079-hub.github.io/confucius-survey/" target="_blank" class="dnb-link">Survey Site ↗</a>
+    </div>
+    <div class="dnav-l2" id="grp-gh">
+      <button class="dnb" data-panel="p8" onclick="showPanel('p8',this)">⑧ Column Field</button>
+    </div>
     <button class="dback" onclick="backToLanding()">← Overview</button>
-    <a href="https://e74134079-hub.github.io/confucius-survey/" target="_blank"
-       style="flex-shrink:0;margin-left:8px;font-family:var(--mono);font-size:11px;
-              color:var(--g60);text-decoration:none;border:.5px solid var(--g20);
-              padding:4px 10px;border-radius:2px;white-space:nowrap;"
-       onmouseover="this.style.color='var(--ink)';this.style.borderColor='var(--g60)'"
-       onmouseout="this.style.color='var(--g60)';this.style.borderColor='var(--g20)'">
-      公眾調查 Survey ↗
-    </a>
   </div>
 
   <div class="dp active" id="p1">
@@ -591,21 +614,85 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
     <div id="svcWrap"></div>
   </div>
 
-  <!-- Panel 7: PPI -->
+  <!-- Panel 7: PPI — 3 sections -->
   <div class="dp" id="p7">
-    <div class="pey">Public Perception · 07</div>
-    <div class="ptitle">PPI — <em>公眾感知指標</em></div>
-    <div class="pdesc">
-      即時從公眾調查讀取象限重心，計算對 ETI 維度權重的調整量。<br>
-      <strong>路徑 C：</strong>象限位置重分配五維度權重 ·
-      <strong>路徑 A：</strong>Y 軸調整 H 抑制、X 軸調整 S 抑制<br>
-      調整幅度 = 重心座標偏離零點的比例 × 最大調整量（±0.08）
+    <div class="pey">Public Perception Index · 07</div>
+    <div class="ptitle">PPI — <em>From Public Attitude to ETI</em></div>
+
+    <!-- Section tabs -->
+    <div class="sec-tabs">
+      <button class="sec-tab active" onclick="switchSec('p7','s1',this)">① Translation Logic</button>
+      <button class="sec-tab" onclick="switchSec('p7','s2',this)">② Public ETI Suite</button>
+      <button class="sec-tab" onclick="switchSec('p7','s3',this)">③ Comparison</button>
+      <button onclick="loadPPI()" style="margin-left:auto;font-family:var(--acumin);font-size:11px;padding:4px 12px;border:.5px solid var(--g20);background:none;cursor:pointer;border-radius:2px;color:var(--g60);">Refresh ↺</button>
     </div>
-    <div id="p7content">
-      <div class="dbox" style="margin-bottom:18px">
-        正在讀取公眾調查資料...
-        <button onclick="loadPPI()" style="margin-left:12px;font-family:var(--acumin);font-size:11px;padding:4px 10px;border:.5px solid var(--g20);background:none;cursor:pointer;border-radius:2px;">重新整理 ↺</button>
+
+    <!-- S1: Translation diagram -->
+    <div class="sec-page active" id="p7-s1">
+      <div class="pdesc" style="margin-bottom:20px">
+        The public survey captures attitude on two axes. These are translated into
+        the five ETI dimensions and two inhibitor coefficients through the mapping below.
       </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="cey">Translation Diagram</div>
+          <svg id="translationSvg" viewBox="0 0 480 320" width="100%"></svg>
+        </div>
+        <div class="card">
+          <div class="cey">Mapping Logic</div>
+          <div style="font-size:12px;line-height:2;font-family:var(--mono);color:var(--g60)">
+            <b style="color:var(--ink);font-family:var(--acumin)">X axis (Rationality ↔ Sensibility)</b><br>
+            Sensibility (+X) → <b>V</b> (visual complexity) ↑<br>
+            Rationality (−X) → <b>D</b> (density) ↑ · <b>F</b> (stability) ↑<br>
+            Sensibility (+X) → <b>S</b> inhibitor ↓ (columns scatter more)<br>
+            Rationality (−X) → <b>S</b> inhibitor ↑ (spatial order stronger)<br><br>
+            <b style="color:var(--ink);font-family:var(--acumin)">Y axis (Criticality ↔ Inclusivity)</b><br>
+            Criticality (+Y) → <b>O</b> (openness) ↑<br>
+            Inclusivity (−Y) → <b>U</b> (user agency) ↑<br>
+            Criticality (+Y) → <b>H</b> inhibitor ↓ (breaks from temple axis)<br>
+            Inclusivity (−Y) → <b>H</b> inhibitor ↑ (respects temple geometry)<br><br>
+            <b style="color:var(--ink);font-family:var(--acumin)">Ideal Vectors per Quadrant</b><br>
+            Sensibility×Criticality → V:0.9  F:0.8  O:0.5  U:0.4  D:0.3<br>
+            Rationality×Criticality → D:0.8  O:0.9  F:0.5  U:0.3  V:0.3<br>
+            Sensibility×Inclusivity → V:0.6  U:0.9  O:0.8  F:0.4  D:0.4<br>
+            Rationality×Inclusivity → D:0.9  F:0.8  O:0.4  U:0.4  V:0.3
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- S2: Full public ETI suite -->
+    <div class="sec-page" id="p7-s2">
+      <div id="p7content">
+        <div class="dbox">Loading public survey data...</div>
+      </div>
+    </div>
+
+    <!-- S3: Comparison radial -->
+    <div class="sec-page" id="p7-s3">
+      <div class="pdesc" style="margin-bottom:20px">
+        Left: original ETI radial (designer's model). Right: public-adjusted ETI radial.
+        Node size and position shift reveals which programmes are amplified or suppressed
+        by public perception.
+      </div>
+      <div id="p7compare">
+        <div class="dbox">Load data in Suite tab first.</div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Panel 8: Generating Columns -->
+  <div class="dp" id="p8">
+    <div class="pey">Generating Columns · 08</div>
+    <div class="ptitle">Column Field — <em>ETI-driven Architecture</em></div>
+    <div class="pdesc">
+      A Grasshopper script translates ETI weights into a column field across the site.
+      Each programme zone creates a repulsion vector — columns scatter, rotate, and grow
+      based on ETI intensity and fusion values. Below: interactive 2D simulation and
+      development timeline.
+    </div>
+    <div id="p8content">
+      <!-- Dev timeline + bubble plan + column axon + GH sim injected by JS -->
     </div>
   </div>
 
@@ -952,6 +1039,24 @@ function buildSvc(){
   });
 }
 
+function switchSec(panel, sec, btn){
+  const p = document.getElementById(panel);
+  p.querySelectorAll('.sec-tab').forEach(t=>t.classList.remove('active'));
+  p.querySelectorAll('.sec-page').forEach(s=>s.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(panel+'-'+sec).classList.add('active');
+}
+
+function toggleGroup(grp, btn){
+  document.querySelectorAll('.dl1').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.dnav-l2').forEach(d=>d.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('grp-'+grp).classList.add('active');
+  // auto-show first panel in group
+  const firstBtn = document.querySelector('#grp-'+grp+' .dnb');
+  if(firstBtn) firstBtn.click();
+}
+
 function showPanel(id,btn){
   document.querySelectorAll('.dp').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.dnb').forEach(b=>b.classList.remove('active'));
@@ -1221,6 +1326,8 @@ function renderPPI(p, adjProg, n){
   html += '</div></div></div>';
 
   document.getElementById('p7content').innerHTML = html;
+  // Also build comparison section
+  buildP7Comparison(adjProg);
   drawAdjRadial(adjProg, 'p7RadialSvg');
 }
 
@@ -1332,6 +1439,409 @@ function drawAdjRadial(adjProg, svgId){
 
     svg.appendChild(g);
   });
+}
+
+
+// ── Translation Diagram (Panel 7 S1) ──────────────────────────────
+function drawTranslationDiagram(){
+  const svg = document.getElementById('translationSvg');
+  if(!svg) return;
+  const W=480, H=320;
+  svg.innerHTML = '';
+
+  // Column headers
+  const cols = [{x:80,label:'Public Survey',sub:'2 axes'},{x:240,label:'ETI Dimensions',sub:'5 indicators'},{x:400,label:'Inhibitors',sub:'H · S'}];
+  cols.forEach(c=>{
+    st(c.x,16,c.label,{'text-anchor':'middle','font-family':ACUMIN,'font-size':'11','font-weight':'500','fill':'var(--ink)'},svg);
+    st(c.x,28,c.sub,{'text-anchor':'middle','font-family':ACUMIN,'font-size':'9','fill':'var(--g60)'},svg);
+  });
+  se('line',{x1:20,y1:34,x2:460,y2:34,stroke:'var(--g20)','stroke-width':'.5'},svg);
+
+  // Public nodes
+  const pub = [
+    {id:'sens',x:60,y:80,label:'Sensibility',sub:'+X',c:'#e46828'},
+    {id:'rat', x:60,y:160,label:'Rationality',sub:'−X',c:'#1887ab'},
+    {id:'crit',x:60,y:220,label:'Criticality',sub:'+Y',c:'#704776'},
+    {id:'incl',x:60,y:280,label:'Inclusivity',sub:'−Y',c:'#237f5d'},
+  ];
+  // ETI dim nodes
+  const dims = [
+    {id:'V',x:240,y:70,label:'V',sub:'Visual',c:'var(--A)'},
+    {id:'D',x:240,y:130,label:'D',sub:'Density',c:'var(--B)'},
+    {id:'F',x:240,y:180,label:'F',sub:'Stability',c:'var(--C)'},
+    {id:'U',x:240,y:230,label:'U',sub:'Agency',c:'#8fc31f'},
+    {id:'O',x:240,y:280,label:'O',sub:'Openness',c:'#7a6a56'},
+  ];
+  // Inhibitor nodes
+  const inhs = [
+    {id:'H',x:400,y:150,label:'H',sub:'Historical',c:'#ac1917'},
+    {id:'S',x:400,y:230,label:'S',sub:'Social',c:'#6b6864'},
+  ];
+
+  // Connections pub→dim
+  const conns = [
+    ['sens','V','↑',1],['sens','S','↓',0],
+    ['rat','D','↑',1],['rat','F','↑',1],['rat','S','↑',0],
+    ['crit','O','↑',1],['crit','H','↓',0],
+    ['incl','U','↑',1],['incl','H','↑',0],
+  ];
+  // extra dim→inh connections
+  const inhConns=[['sens','S'],['rat','S'],['crit','H'],['incl','H']];
+
+  // draw lines first
+  conns.forEach(([from,to,dir,isDim])=>{
+    const fn=pub.find(p=>p.id===from);
+    const tn=isDim ? dims.find(d=>d.id===to) : inhs.find(i=>i.id===to);
+    if(!fn||!tn) return;
+    const alpha = isDim ? '0.3' : '0.15';
+    const clr = dir==='↑' ? '#ac1917' : '#4c4948';
+    se('line',{x1:fn.x+22,y1:fn.y,x2:tn.x-22,y2:tn.y,stroke:clr,'stroke-width':'.8',opacity:alpha},svg);
+  });
+
+  // draw nodes
+  [...pub,...dims,...inhs].forEach(n=>{
+    const g=document.createElementNS(NS,'g');
+    se('circle',{cx:n.x,cy:n.y,r:20,fill:n.c,opacity:'.12'},g);
+    se('circle',{cx:n.x,cy:n.y,r:20,fill:'none',stroke:n.c,'stroke-width':'1'},g);
+    st(n.x,n.y-2,n.label,{'text-anchor':'middle','font-family':ACUMIN,'font-size':'11','font-weight':'600','fill':n.c},g);
+    st(n.x,n.y+10,n.sub,{'text-anchor':'middle','font-family':ACUMIN,'font-size':'8','fill':'var(--g60)'},g);
+    svg.appendChild(g);
+  });
+
+  // draw dividers
+  se('line',{x1:160,y1:40,x2:160,y2:300,stroke:'var(--g10)','stroke-width':'.5'},svg);
+  se('line',{x1:320,y1:40,x2:320,y2:300,stroke:'var(--g10)','stroke-width':'.5'},svg);
+}
+
+// Run translation diagram when panel 7 becomes visible
+const _origShowPanel2 = showPanel;
+showPanel = function(id, btn){
+  _origShowPanel2(id, btn);
+  if(id==='p7') { setTimeout(drawTranslationDiagram, 50); setTimeout(loadPPI, 100); }
+  if(id==='p8') { setTimeout(buildP8, 50); }
+};
+
+function buildP7Comparison(adjProg){
+  const box = document.getElementById('p7compare');
+  if(!box) return;
+  box.innerHTML = '<div class="two-col">' +
+    '<div class="card"><div class="cey">Original ETI Radial</div><svg id="radOrig" viewBox="0 0 480 420" width="100%"></svg></div>' +
+    '<div class="card"><div class="cey">Public-Adjusted ETI Radial</div><svg id="radAdj" viewBox="0 0 480 420" width="100%"></svg></div>' +
+    '</div>';
+  setTimeout(function(){
+    // draw original using existing buildDist approach
+    drawAdjRadial(PROG.map(function(p){return Object.assign({},p,{eti_adj:p.eti,delta:0});}), 'radOrig');
+    drawAdjRadial(adjProg, 'radAdj');
+  }, 50);
+}
+
+
+// ════════════════════════════════════════════════════════
+// PANEL 8 — Generating Columns
+// ════════════════════════════════════════════════════════
+
+const GH_PHASES = [
+  { phase:'I', ver:'v3.0–3.15', title:'Prototype & Vertical Layering',
+    steps:[
+      {v:'v3.0', text:'HTTP bridge to GitHub JSON; spheres at Rhino origin as programme bubbles.'},
+      {v:'v3.5', text:'Five-zone colour system (A–E); 3D text labels per programme.'},
+      {v:'v3.10', text:'ETI as vertical height operator — bubbles gain Z from intensity.'},
+      {v:'v3.15', text:'First global column grid; function-zone repulsion vectors push columns outward.'},
+    ]
+  },
+  { phase:'II', ver:'v3.16–3.34', title:'Site Boundary & Dual-Anchor Geometry',
+    steps:[
+      {v:'v3.20', text:'base_boundary input: columns clipped to site red-line polygon.'},
+      {v:'v3.25', text:'scatter_factor, cloud_scale, col_rotation sliders — high morphological variety.'},
+      {v:'v3.28', text:'Dual-anchor lock: Theater → center_pt, Hands-on Studio → minglun_pt.'},
+      {v:'v3.33', text:'Diagonal spatial axis established; programmes align to temple–city vector.'},
+    ]
+  },
+  { phase:'III', ver:'v3.35–3.44', title:'Urban Context & Material',
+    steps:[
+      {v:'v3.35', text:'X-axis mirror fix: Group C correctly occupies SW city-interface quadrant.'},
+      {v:'v3.36', text:'Column colour synced to programme zone via column_preview_color output.'},
+      {v:'v3.40', text:'Rhino 8 / Python 3 compatibility; scatter_factor as sole rotation driver.'},
+    ]
+  },
+  { phase:'IV', ver:'v3.45', title:'Current State',
+    steps:[
+      {v:'v3.45', text:'Full column field: A/B/C/D/E groups with ETI-driven height, width, rotation.'},
+    ]
+  },
+];
+
+// Programme data for bubble plan
+const PROG_ZONES = {
+  A:{c:'#e4007f',cl:'#f9cce5',label:'Conservation & Craft'},
+  B:{c:'#00a0e9',cl:'#cceef9',label:'Learning & Research'},
+  C:{c:'#f39800',cl:'#fde9c4',label:'Performance & Public'},
+  D:{c:'#7a6a56',cl:'#e0dbd4',label:'Service'},
+  E:{c:'#8fc31f',cl:'#e4f2c4',label:'Landscape'},
+};
+
+function buildP8(){
+  const box = document.getElementById('p8content');
+  if(!box || box.dataset.built) return;
+  box.dataset.built = '1';
+
+  let html8 = '';
+
+  // ── Dev Timeline ──
+  html8 += '<div class="card" style="margin-bottom:20px"><div class="cey">Development Timeline · Grasshopper Script</div>';
+  html8 += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:8px">';
+  GH_PHASES.forEach(ph => {
+    html8 += '<div style="border-left:2px solid var(--g20);padding-left:12px">';
+    html8 += '<div style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--g40);margin-bottom:4px">Phase '+ph.phase+'</div>';
+    html8 += '<div style="font-size:11px;font-weight:500;color:var(--ink);margin-bottom:2px">'+ph.title+'</div>';
+    html8 += '<div style="font-size:10px;color:var(--g60);font-family:var(--mono);margin-bottom:8px">'+ph.ver+'</div>';
+    ph.steps.forEach(s => {
+      html8 += '<div style="margin-bottom:8px">';
+      html8 += '<div style="font-size:10px;font-weight:500;color:var(--ink);font-family:var(--mono)">'+s.v+'</div>';
+      html8 += '<div style="font-size:11px;color:var(--g60);line-height:1.5">'+s.text+'</div>';
+      html8 += '</div>';
+    });
+    html8 += '</div>';
+  });
+  html8 += '</div></div>';
+
+  // ── Two visualisations: Bubble Plan + Column Axon ──
+  html8 += '<div class="two-col" style="margin-bottom:20px">';
+
+  // Bubble plan
+  html8 += '<div class="card"><div class="cey">Programme Bubble Plan — ETI Scale</div>';
+  html8 += '<svg id="bubbleSvg" viewBox="0 0 480 560" width="100%"></svg></div>';
+
+  // Column axon
+  html8 += '<div class="card"><div class="cey">Column Field — Isometric Preview</div>';
+  html8 += '<canvas id="colAxon" width="480" height="560" style="width:100%;display:block"></canvas></div>';
+
+  html8 += '</div>';
+
+  // ── GH Parameter Simulator ──
+  html8 += '<div class="card"><div class="cey">Column Field Simulator — Parameter Control</div>';
+  html8 += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">';
+  const sliders = [
+    {id:'sf',label:'scatter_factor',min:0.2,max:3.0,val:1.0,step:0.05},
+    {id:'cs',label:'cloud_scale',min:0.3,max:2.0,val:1.0,step:0.05},
+    {id:'gd',label:'grid_density',min:6,max:20,val:12,step:1},
+    {id:'ch',label:'col_height',min:3,max:12,val:6,step:0.5},
+  ];
+  sliders.forEach(s => {
+    html8 += '<div>';
+    html8 += '<div style="display:flex;justify-content:space-between;margin-bottom:4px">';
+    html8 += '<span style="font-family:var(--mono);font-size:11px;color:var(--g60)">'+s.label+'</span>';
+    html8 += '<span style="font-family:var(--mono);font-size:11px;color:var(--ink)" id="'+s.id+'_val">'+s.val+'</span>';
+    html8 += '</div>';
+    html8 += '<input type="range" id="'+s.id+'" min="'+s.min+'" max="'+s.max+'" value="'+s.val+'" step="'+s.step+'" style="width:100%" oninput="updateSim()">';
+    html8 += '</div>';
+  });
+  html8 += '</div>';
+  html8 += '<canvas id="simCanvas" width="900" height="480" style="width:100%;display:block;border:.5px solid var(--g10);border-radius:2px"></canvas>';
+  html8 += '</div>';
+
+  box.innerHTML = html8;
+
+  setTimeout(() => {
+    drawBubblePlan();
+    drawColAxon();
+    updateSim();
+  }, 60);
+}
+
+// ── Bubble Plan ────────────────────────────────────────────
+function drawBubblePlan(){
+  const svg = document.getElementById('bubbleSvg');
+  if(!svg) return;
+  svg.innerHTML='';
+  const W=480, H=540;
+
+  // Nolli-style site boundary (simplified polygon)
+  const site = [[160,20],[360,20],[390,80],[390,520],[80,520],[80,80]];
+  const pts = site.map(p=>p[0]+','+p[1]).join(' ');
+  se('polygon',{points:pts,fill:'#f5f4f0',stroke:'#ac1917','stroke-width':'1',opacity:'.6'},svg);
+
+  // Confucius temple outline (top right)
+  const temple = [[200,30],[360,30],[360,200],[200,200]];
+  se('rect',{x:200,y:30,width:160,height:170,fill:'#e8e6e2',stroke:'#c4c2be','stroke-width':'.5'},svg);
+  se('rect',{x:215,y:45,width:130,height:140,fill:'none',stroke:'#d4d2ce','stroke-width':'.5'},svg);
+  st(280,115,'Temple',{'text-anchor':'middle','font-family':ACUMIN,'font-size':'9','fill':'var(--g40)'},svg);
+
+  // Plot bubbles using PROG positions
+  PROG.forEach(p => {
+    // Map MDS x,y to svg coords
+    // MDS range approx [-0.5, 0.5]
+    const sx = 120 + (p.x + 0.5) * 460;
+    const sy = 220 + (-p.y + 0.4) * 460;
+    const r  = 10 + p.eti * 70 + (p.fusion||0) * 0.08;
+    const zd = PROG_ZONES[p.z]||{c:'#9c9894',cl:'#e8e6e2'};
+    se('circle',{cx:sx,cy:sy,r:r,fill:zd.cl,stroke:zd.c,'stroke-width':'.8',opacity:'.8'},svg);
+    // name if big enough
+    if(r>16){
+      st(sx,sy+3,p.n.split(' ')[0],
+        {'text-anchor':'middle','font-family':ACUMIN,'font-size':Math.max(6,Math.min(9,r*0.45)),
+         'fill':zd.c,'font-style':'italic'},svg);
+    }
+  });
+
+  // Zone legend
+  let ly=490;
+  Object.entries(PROG_ZONES).forEach(([k,v])=>{
+    se('circle',{cx:90,cy:ly,r:5,fill:v.c},svg);
+    st(100,ly+4,k+' '+v.label,{'font-family':ACUMIN,'font-size':'8','fill':'var(--g60)'},svg);
+    ly+=14;
+  });
+}
+
+// ── Column Axon (isometric 2.5D) ────────────────────────────
+function drawColAxon(){
+  const canvas = document.getElementById('colAxon');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W=480,H=560;
+  ctx.clearRect(0,0,W,H);
+
+  // Isometric projection
+  function iso(x,y,z){
+    return {
+      px: W/2 + (x - y) * 0.6,
+      py: H*0.38 + (x + y) * 0.3 - z * 0.9
+    };
+  }
+
+  // Draw site ground plane
+  ctx.fillStyle = '#f5f4f0';
+  const gnd = [[0,0],[140,0],[140,200],[0,200]];
+  ctx.beginPath();
+  const g0=iso(0,0,0);
+  ctx.moveTo(g0.px,g0.py);
+  [[140,0],[140,200],[0,200]].forEach(([x,y])=>{const p=iso(x,y,0);ctx.lineTo(p.px,p.py);});
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#d4d2ce'; ctx.lineWidth=.5; ctx.stroke();
+
+  // Temple block
+  const drawBlock=(x,y,w,d,h,fill,stroke)=>{
+    // top face
+    ctx.fillStyle=fill;
+    const tl=iso(x,y,h),tr=iso(x+w,y,h),br=iso(x+w,y+d,h),bl=iso(x,y+d,h);
+    ctx.beginPath();ctx.moveTo(tl.px,tl.py);ctx.lineTo(tr.px,tr.py);ctx.lineTo(br.px,br.py);ctx.lineTo(bl.px,bl.py);ctx.closePath();ctx.fill();
+    // right face
+    ctx.fillStyle=fill+'cc';
+    const b_tr=iso(x+w,y,0),b_br=iso(x+w,y+d,0);
+    ctx.beginPath();ctx.moveTo(tr.px,tr.py);ctx.lineTo(b_tr.px,b_tr.py);ctx.lineTo(b_br.px,b_br.py);ctx.lineTo(br.px,br.py);ctx.closePath();ctx.fill();
+    // front face
+    ctx.fillStyle=fill+'99';
+    const b_bl=iso(x,y+d,0);
+    ctx.beginPath();ctx.moveTo(bl.px,bl.py);ctx.lineTo(br.px,br.py);ctx.lineTo(b_br.px,b_br.py);ctx.lineTo(b_bl.px,b_bl.py);ctx.closePath();ctx.fill();
+    ctx.strokeStyle=stroke;ctx.lineWidth=.4;
+    [tl,tr,br,bl].reduce((a,b,i,arr)=>{
+      if(i===0){ctx.beginPath();ctx.moveTo(a.px,a.py);}else{ctx.lineTo(b.px,b.py);}
+      if(i===arr.length-1) ctx.closePath();
+      return b;
+    });
+    ctx.stroke();
+  };
+  drawBlock(70,0,70,80,18,'#c1855e','#a0603a');
+
+  // Columns
+  const sf = parseFloat(document.getElementById('sf')?.value||1.0);
+  const ch = parseFloat(document.getElementById('ch')?.value||6.0);
+  PROG.forEach(p=>{
+    const bx = 20 + (p.x+0.5)*110 + (Math.random()-0.5)*8*sf;
+    const by = 20 + (-p.y+0.5)*160 + (Math.random()-0.5)*8*sf;
+    const zd = PROG_ZONES[p.z]||{c:'#9c9894'};
+    const cw = 1.5 + p.eti*3;
+    const colH = ch * (0.5 + p.eti);
+    drawBlock(bx-cw/2, by-cw/2, cw, cw, colH, zd.c+'88', zd.c);
+  });
+}
+
+// ── GH Simulation Canvas (top-view) ──────────────────────
+function updateSim(){
+  const sf = parseFloat(document.getElementById('sf')?.value||1.0);
+  const cs = parseFloat(document.getElementById('cs')?.value||1.0);
+  const gd = parseInt(document.getElementById('gd')?.value||12);
+  const ch = parseFloat(document.getElementById('ch')?.value||6.0);
+  ['sf','cs','gd','ch'].forEach(id=>{
+    const el=document.getElementById(id+'_val');
+    if(el) el.textContent=document.getElementById(id)?.value;
+  });
+
+  const canvas = document.getElementById('simCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W=900, H=480;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#f5f4f0'; ctx.fillRect(0,0,W,H);
+
+  // Site boundary (simplified rectangle)
+  const sx=80,sy=40,sw=740,sh=400;
+  ctx.fillStyle='#ffffff'; ctx.fillRect(sx,sy,sw,sh);
+  ctx.strokeStyle='#ac1917'; ctx.lineWidth=1;
+  ctx.strokeRect(sx,sy,sw,sh);
+
+  // Temple block
+  ctx.fillStyle='#e0d4c0'; ctx.fillRect(sx+sw*0.42, sy+10, sw*0.35, sh*0.38);
+  ctx.strokeStyle='#c4a882'; ctx.lineWidth=.5; ctx.strokeRect(sx+sw*0.42,sy+10,sw*0.35,sh*0.38);
+
+  // Programme bubbles (faint guide)
+  PROG.forEach(p=>{
+    const bx = sx+sw/2 + p.x*sw*0.45*cs;
+    const by = sy+sh/2 - p.y*sh*0.45*cs;
+    const r  = (8+p.eti*50)*cs;
+    const zd = PROG_ZONES[p.z]||{c:'#9c9894',cl:'#e8e6e2'};
+    ctx.beginPath(); ctx.arc(bx,by,r,0,Math.PI*2);
+    ctx.fillStyle=zd.cl+'60'; ctx.fill();
+    ctx.strokeStyle=zd.c+'40'; ctx.lineWidth=.5; ctx.stroke();
+  });
+
+  // Column grid
+  const step = sw/(gd*1.5);
+  for(let gx=sx+step/2; gx<sx+sw; gx+=step){
+    for(let gy=sy+step/2; gy<sy+sh; gy+=step){
+      // Check repulsion from each programme
+      let rx=0,ry=0;
+      PROG.forEach(p=>{
+        const bx=sx+sw/2+p.x*sw*0.45*cs;
+        const by=sy+sh/2-p.y*sh*0.45*cs;
+        const r=(8+p.eti*50)*cs;
+        const dx=gx-bx, dy=gy-by;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<r){
+          const force=(1-dist/r)*sf*8;
+          rx+=dx/dist*force; ry+=dy/dist*force;
+        }
+      });
+      const cx2=gx+rx, cy2=gy+ry;
+      if(cx2<sx||cx2>sx+sw||cy2<sy||cy2>sy+sh) continue;
+      // Column colour from nearest programme
+      let nearest=null, minD=Infinity;
+      PROG.forEach(p=>{
+        const bx=sx+sw/2+p.x*sw*0.45*cs;
+        const by=sy+sh/2-p.y*sh*0.45*cs;
+        const d=Math.sqrt((cx2-bx)**2+(cy2-by)**2);
+        if(d<minD){minD=d;nearest=p;}
+      });
+      const zd=nearest?PROG_ZONES[nearest.z]:{c:'#9c9894'};
+      const colW=Math.max(2, 2+nearest.eti*ch*0.3);
+      const rot=rx*0.04*sf; // slight rotation from scatter
+      ctx.save();
+      ctx.translate(cx2,cy2);
+      ctx.rotate(rot);
+      ctx.fillStyle=zd.c+'cc';
+      ctx.fillRect(-colW/2,-colW/2,colW,colW);
+      ctx.restore();
+    }
+  }
+
+  // Axis labels
+  ctx.fillStyle='#9c9894'; ctx.font='10px "DM Mono",monospace';
+  ctx.textAlign='center';
+  ctx.fillText('← Temple / North', sx+sw*0.65, sy+sh+18);
+  ctx.fillText('City Interface →', sx+sw*0.2, sy+sh+18);
+
+  // Re-draw axon with new params
+  drawColAxon();
 }
 
 </script></body></html>
