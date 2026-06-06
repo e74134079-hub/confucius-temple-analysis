@@ -1390,12 +1390,7 @@ function renderPPI(p, adjProg, n){
   }, 10);
 }
 
-// Auto-load when switching to p7
-const _origShowPanel = showPanel;
-showPanel = function(id, btn){
-  _origShowPanel(id, btn);
-  if(id==='p7') loadPPI();
-};
+// showPanel hook — consolidated below
 
 
 // ── drawAdjRadial: radial diagram using adjusted ETI ─────────────
@@ -1634,12 +1629,15 @@ function drawTranslationDiagram(){
   se('line',{x1:320,y1:40,x2:320,y2:300,stroke:'var(--g10)','stroke-width':'.5'},svg);
 }
 
-// Run translation diagram when panel 7 becomes visible
-const _origShowPanel2 = showPanel;
+// Single showPanel hook for all panel side-effects
+const _origSP = showPanel;
 showPanel = function(id, btn){
-  _origShowPanel2(id, btn);
-  if(id==='p7') { setTimeout(drawTranslationDiagram, 50); setTimeout(loadPPI, 100); }
-  if(id==='p8') { setTimeout(buildP8, 50); }
+  _origSP(id, btn);
+  if(id==='p7'){
+    setTimeout(drawTranslationDiagram, 50);
+    setTimeout(loadPPI, 120);
+  }
+  if(id==='p8') setTimeout(buildP8, 50);
 };
 
 function buildP7Comparison(adjProg, I_base){
