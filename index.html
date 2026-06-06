@@ -1246,7 +1246,7 @@ async function loadPPI(){
     var cy=rows.reduce(function(s,d){return s+d.y;},0)/rows.length;
     var ppi=p7Compute(cx,cy);
     var adjProg=p7ScoreProg(PROG,ppi);
-    p7Data={ppi,adjProg,n:rows.length};
+    p7Data={ppi:ppi,adjProg:adjProg,n:rows.length};
     renderP7Suite(ppi,adjProg,rows.length);
     setTimeout(function(){renderP7Compare(adjProg,ppi);},60);
   }catch(e){
@@ -1437,12 +1437,12 @@ function p7InitExplorer(){
         p7HypState.newH.toFixed(2)+'  S: '+p7HypState.newS.toFixed(2)+'<br>Top dims: <b>'+topDims+'</b>';
     },25);
   }
-  qc.addEventListener('mousedown',function(e){p7QDrag=true;var{x,y}=qFromEv(e);applyHyp(x,y);});
-  qc.addEventListener('mousemove',function(e){if(!p7QDrag)return;var{x,y}=qFromEv(e);applyHyp(x,y);});
+  qc.addEventListener('mousedown',function(e){p7QDrag=true;var _ev=qFromEv(e);var x=_ev.x,y=_ev.y;applyHyp(x,y);});
+  qc.addEventListener('mousemove',function(e){if(!p7QDrag)return;var _ev=qFromEv(e);var x=_ev.x,y=_ev.y;applyHyp(x,y);});
   qc.addEventListener('mouseup',function(){p7QDrag=false;});
   qc.addEventListener('mouseleave',function(){p7QDrag=false;});
-  qc.addEventListener('touchstart',function(e){p7QDrag=true;var{x,y}=qFromEv(e.touches[0]);applyHyp(x,y);},{passive:true});
-  qc.addEventListener('touchmove',function(e){if(!p7QDrag)return;var{x,y}=qFromEv(e.touches[0]);applyHyp(x,y);},{passive:true});
+  qc.addEventListener('touchstart',function(e){p7QDrag=true;var _ev=qFromEv(e.touches[0]);var x=_ev.x,y=_ev.y;applyHyp(x,y);},{passive:true});
+  qc.addEventListener('touchmove',function(e){if(!p7QDrag)return;var _ev=qFromEv(e.touches[0]);var x=_ev.x,y=_ev.y;applyHyp(x,y);},{passive:true});
   qc.addEventListener('touchend',function(){p7QDrag=false;});
 }
 
@@ -1451,7 +1451,7 @@ function p7ComputeWithContrast(cx,cy){
   var avecs=PROG.map(function(p){return p7AdjVec(p.v,ppi.I);});
   var pos=p7MDS(avecs);  // uses global p7Contrast
   return Object.assign({},ppi,{progs:PROG.map(function(p,i){
-    var sc=p7DistScore(p.v,ppi.I);
+    var sc=(function(v,I){var MAX=Math.sqrt(5);var dims=['V','D','F','U','O'];return 1-Math.sqrt(dims.reduce(function(s,d,k){return s+Math.pow(v[k]-I[d],2);},0))/MAX;})(p.v,ppi.I);
     var ea=+(sc*(1-ppi.newH*p.v[5])*(1-ppi.newS*p.v[6])).toFixed(3);
     return Object.assign({},p,{eti_adj:ea,delta:+(ea-p.eti).toFixed(3),pub_x:pos[i][0],pub_y:pos[i][1]});
   })});
