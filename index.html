@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Confucius Temple — Programme Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&family=Inter:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --acumin:"Acumin Variable Concept","Acumin Pro","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --acumin:"Inter","Helvetica Neue",Helvetica,Arial,sans-serif;
   --mono:'DM Mono',monospace;
   --noto:'Noto Sans TC',sans-serif;
   --A:#e4007f;--Al:#f9cce5;--B:#00a0e9;--Bl:#cceef9;
@@ -927,7 +927,12 @@ function buildSvc(){
     const g=document.createElementNS(NS,'g');g.style.cursor='pointer';
     se('circle',{cx:x,cy:y,r:10,fill:ZCL[s.z],stroke:ZC[s.z],'stroke-width':'.5'},g);
     st(x,y+4,s.n.split(' ').map(ww=>ww[0]).join('').slice(0,2),{'text-anchor':'middle','font-family':ACUMIN,'font-size':'9','fill':ZC[s.z],'font-weight':'400'},g);
-    st(x,y-14,s.n.length>14?s.n.slice(0,13)+'.':s.n,{'text-anchor':'middle','font-family':ACUMIN,'font-size':'11','fill':'#4c4948','font-weight':'200'},g);
+    // Smart label: offset based on quadrant to reduce overlap
+    const lx = s.SAI > 0.65 ? x - 14 : x + 2;
+    const ly = s.SCI > 0.65 ? y - 14 : y + 22;
+    const anchor = s.SAI > 0.65 ? 'end' : 'start';
+    const shortN = s.n.length > 16 ? s.n.slice(0,15)+'.' : s.n;
+    st(lx, ly, shortN, {'text-anchor':anchor,'font-family':ACUMIN,'font-size':'9','fill':'#6b6864','font-weight':'300'}, g);
     g.addEventListener('click',()=>{document.getElementById('svcDet').innerHTML=`<b>${s.n}</b> SAI ${s.SAI.toFixed(2)} · SCI ${s.SCI.toFixed(2)}<br>Serves: ${Array.isArray(s.serves)?s.serves.join(', '):s.serves}`;});
     svg2.appendChild(g);
   });
