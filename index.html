@@ -125,8 +125,8 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
 .dh{
   position:sticky;top:0;z-index:100;background:var(--w);
   border-bottom:.5px solid var(--g20);
-  display:flex;align-items:center;
-  padding:0 20px;height:44px;gap:0;flex-wrap:nowrap;overflow-x:auto;
+  display:flex;flex-direction:column;align-items:stretch;
+  padding:0;min-height:44px;
 }
 .dw{
   font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
@@ -142,11 +142,12 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
 .dnb:hover{color:var(--ink);}
 .dnb.active{color:var(--ink);border-bottom-color:var(--ink);}
 .dsep{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--g40);padding:0 8px;border-left:.5px solid var(--g20);margin-left:4px;height:44px;display:flex;align-items:center;white-space:nowrap;flex-shrink:0;}
-.dnav-l1{display:flex;align-items:center;gap:0;border-right:.5px solid var(--g20);margin-right:8px;padding-right:8px;}
+.dnav-l1{display:flex;align-items:center;gap:0;padding:0 20px;height:44px;border-bottom:.5px solid var(--g10);flex-shrink:0;}
+.dh-row1{display:flex;align-items:center;gap:0;padding:0 20px;height:44px;flex-shrink:0;}
 .dl1{font-family:var(--acumin);font-size:11px;letter-spacing:.04em;padding:0 12px;height:44px;border:none;background:transparent;cursor:pointer;color:var(--g60);border-bottom:2px solid transparent;transition:all .12s;white-space:nowrap;}
 .dl1:hover{color:var(--ink);}
 .dl1.active{color:var(--ink);border-bottom-color:var(--ink);}
-.dnav-l2{display:none;align-items:center;gap:0;}
+.dnav-l2{display:none;align-items:center;gap:0;padding:0 20px;height:38px;background:var(--g05);border-bottom:.5px solid var(--g10);flex-shrink:0;}
 .dnav-l2.active{display:flex;}
 .dnb-link{font-family:var(--acumin);font-size:11px;color:var(--g60);text-decoration:none;padding:0 12px;height:44px;display:flex;align-items:center;border-bottom:2px solid transparent;}
 .dnb-link:hover{color:var(--ink);}
@@ -502,8 +503,9 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
 <div id="dashboard">
   <div class="dh">
     <!-- Level 1: main nav -->
+    <div class="dh-row1">
     <span class="dw">Confucius Temple</span>
-    <div class="dnav-l1">
+    <div class="dnav-l1" style="border:none;margin:0;padding:0;">
       <button class="dl1 active" data-group="programme" onclick="toggleGroup('programme',this)">Programme</button>
       <button class="dl1" data-group="landscape" onclick="toggleGroup('landscape',this)">Landscape</button>
       <button class="dl1" data-group="service" onclick="toggleGroup('service',this)">Service</button>
@@ -531,6 +533,7 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
       <button class="dnb" data-panel="p8" onclick="showPanel('p8',this)">⑧ Column Field</button>
     </div>
     <button class="dback" onclick="backToLanding()">← Overview</button>
+    </div><!-- /dh-row1 -->
   </div>
 
   <div class="dp active" id="p1">
@@ -1073,7 +1076,21 @@ function openDash(panelId){
     document.querySelectorAll('.dp').forEach(p=>p.classList.remove('active'));
     document.querySelectorAll('.dnb').forEach(b=>b.classList.remove('active'));
     document.getElementById(panelId).classList.add('active');
-    document.querySelectorAll('.dnb').forEach(b=>{if(b.dataset&&b.dataset.panel===panelId)b.classList.add('active');});
+    // Activate the correct L1 group and L2 nav button
+    document.querySelectorAll('.dnb').forEach(b=>{
+      if(b.dataset&&b.dataset.panel===panelId){
+        b.classList.add('active');
+        // Find parent dnav-l2 and activate it + its L1 button
+        const l2=b.closest('.dnav-l2');
+        if(l2){
+          l2.classList.add('active');
+          const grpId=l2.id.replace('grp-','');
+          document.querySelectorAll('.dl1').forEach(d=>d.classList.remove('active'));
+          const l1btn=document.querySelector('.dl1[data-group="'+grpId+'"]');
+          if(l1btn) l1btn.classList.add('active');
+        }
+      }
+    });
   },480);
 }
 function backToLanding(){
