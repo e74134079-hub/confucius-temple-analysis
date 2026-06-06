@@ -143,6 +143,11 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
 .dnb.active{color:var(--ink);border-bottom-color:var(--ink);}
 .dsep{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--g40);padding:0 8px;border-left:.5px solid var(--g20);margin-left:4px;height:44px;display:flex;align-items:center;white-space:nowrap;flex-shrink:0;}
 
+.p7tab{font-family:var(--acumin);font-size:11px;letter-spacing:.04em;padding:9px 16px;border:none;background:none;cursor:pointer;color:var(--g60);border-bottom:2px solid transparent;transition:all .12s;}
+.p7tab:hover{color:var(--ink);}
+.p7tab.active{color:var(--ink);border-bottom-color:var(--ink);}
+.p7sec{display:none;}
+.p7sec.active{display:block;}
 .dback{margin-left:auto;font-family:var(--mono);font-size:var(--fs-xs);color:var(--g60);background:none;border:.5px solid var(--g20);cursor:pointer;padding:5px 11px;border-radius:2px;flex-shrink:0;}
 .dback:hover{color:var(--ink);border-color:var(--g60);}
 .dp{display:none;padding:24px 28px 56px;}
@@ -498,6 +503,8 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
     <button class="dnb" data-panel="p5" onclick="showPanel('p5',this)">⑤ LCI</button>
     <span class="dsep">Service</span>
     <button class="dnb" data-panel="p6" onclick="showPanel('p6',this)">⑥ SAI × SCI</button>
+    <span class="dsep">Public</span>
+    <button class="dnb" data-panel="p7" onclick="showPanel('p7',this)">⑦ PPI</button>
     <button class="dback" onclick="backToLanding()">← Overview</button>
     <a href="https://e74134079-hub.github.io/confucius-survey/" target="_blank"
        style="flex-shrink:0;margin-left:8px;font-family:var(--mono);font-size:11px;
@@ -588,6 +595,62 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
     <div class="ptitle">Service — SAI × SCI</div>
     <div class="pdesc"><strong>SAI</strong>: multi-zone reach 0.35 · priority distance 0.30 · invisibility 0.20 · peak access 0.15<br><strong>SCI</strong>: dependency count 0.40 · substitutability(inv) 0.35 · failure radius 0.25<br>High SCI + Low SAI = GH warning (critical but inaccessible).</div>
     <div id="svcWrap"></div>
+  </div>
+
+  <!-- ═══ Panel 7: PPI ═══ -->
+  <div class="dp" id="p7">
+    <div class="pey">Public Perception · 07</div>
+    <div class="ptitle">PPI — <em>From Public Attitude to ETI</em></div>
+    <div class="pdesc">
+      The public survey captures attitude on two axes (Rationality↔Sensibility, Criticality↔Inclusivity).
+      These are translated into ETI dimension language via an ideal vector <em>I</em>, then used to
+      recompute a fully independent public ETI for each programme.
+      The right radial shows how the relational structure shifts when public expectation replaces designer assessment.
+    </div>
+
+    <!-- Section tabs -->
+    <div style="display:flex;align-items:center;gap:0;border-bottom:.5px solid var(--g20);margin-bottom:24px;">
+      <button class="p7tab active" onclick="p7Switch('s1',this)">① Translation</button>
+      <button class="p7tab" onclick="p7Switch('s2',this)">② ETI Suite</button>
+      <button class="p7tab" onclick="p7Switch('s3',this)">③ Comparison</button>
+      <button onclick="loadPPI()" style="margin-left:auto;font-family:var(--acumin);font-size:11px;padding:4px 12px;border:.5px solid var(--g20);background:none;cursor:pointer;border-radius:2px;color:var(--g60);">Refresh ↺</button>
+    </div>
+
+    <!-- S1: Translation diagram -->
+    <div class="p7sec active" id="p7-s1">
+      <div class="two-col">
+        <div class="card">
+          <div class="cey">Translation Diagram · Public → ETI</div>
+          <svg id="p7transSvg" viewBox="0 0 500 320" width="100%"></svg>
+        </div>
+        <div class="card">
+          <div class="cey">Mapping Logic</div>
+          <div style="font-size:12px;line-height:2.1;font-family:var(--mono);color:var(--g60)">
+            <b style="color:var(--ink);font-family:var(--acumin)">X — Sensibility (+)</b><br>
+            → V (visual complexity) ↑ · S inhibitor ↓<br><br>
+            <b style="color:var(--ink);font-family:var(--acumin)">X — Rationality (−)</b><br>
+            → D (density) ↑ · F (stability) ↑ · S inhibitor ↑<br><br>
+            <b style="color:var(--ink);font-family:var(--acumin)">Y — Criticality (+)</b><br>
+            → O (openness) ↑ · H inhibitor ↓ (breaks temple axis)<br><br>
+            <b style="color:var(--ink);font-family:var(--acumin)">Y — Inclusivity (−)</b><br>
+            → U (user agency) ↑ · H inhibitor ↑ (respects axis)<br><br>
+            <b style="color:var(--ink);font-family:var(--acumin)">Ideal Vector I</b><br>
+            Interpolation between quadrant ideal vectors<br>
+            weighted by distance from origin (expectation strength)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- S2: ETI Suite -->
+    <div class="p7sec" id="p7-s2">
+      <div id="p7suite"><div class="dbox" style="color:var(--g60)">Click Refresh to load survey data.</div></div>
+    </div>
+
+    <!-- S3: Comparison radials -->
+    <div class="p7sec" id="p7-s3">
+      <div id="p7compare"><div class="dbox" style="color:var(--g60)">Load data in ETI Suite tab first.</div></div>
+    </div>
   </div>
 
   <div class="dfoot">
@@ -943,6 +1006,7 @@ function showPanel(id,btn){
   document.querySelectorAll('.dnb').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(btn)btn.classList.add('active');
+  if(id==='p7') document.dispatchEvent(new Event('p7open'));
 }
 function openDash(panelId){
   const l=document.getElementById('landing');
@@ -997,5 +1061,377 @@ function closeLightbox(){
 }
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLightbox();});
 
+
+
+// ══════════════════════════════════════════════════════════════
+// PANEL 7 — PPI  (self-contained, no showPanel override needed)
+// ══════════════════════════════════════════════════════════════
+const SB7 = 'https://ywuamzusgtmydgvlsxpv.supabase.co';
+const SK7 = 'sb_publishable_C4u8NgyKacE5SrByLCQWTA_rBTkdJYr';
+
+// ── Tab switching ──────────────────────────────────────────────
+function p7Switch(sec, btn){
+  document.querySelectorAll('.p7tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.p7sec').forEach(s=>s.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('p7-'+sec).classList.add('active');
+  if(sec==='s1') setTimeout(drawP7Trans, 30);
+}
+
+// ── Ideal vectors per quadrant ────────────────────────────────
+const P7_IDEAL = {
+  sens_crit: {V:0.90, D:0.20, F:0.70, U:0.30, O:0.65},
+  rat_crit:  {V:0.20, D:0.85, F:0.40, U:0.20, O:0.90},
+  sens_incl: {V:0.75, D:0.20, F:0.30, U:0.90, O:0.65},
+  rat_incl:  {V:0.20, D:0.90, F:0.85, U:0.40, O:0.20},
+};
+const P7_BASE_INH = {H:0.60, S:0.40};
+
+function p7Quad(cx,cy){
+  if(cx>=0&&cy>=0) return 'sens_crit';
+  if(cx< 0&&cy>=0) return 'rat_crit';
+  if(cx>=0&&cy< 0) return 'sens_incl';
+  return 'rat_incl';
+}
+
+// ── Main compute ──────────────────────────────────────────────
+function p7Compute(cx, cy){
+  const nx=cx/5, ny=cy/5;
+  const dist=Math.sqrt(nx*nx+ny*ny);
+  const strength=Math.min(dist/1.414,1.0);
+  const quad=p7Quad(cx,cy);
+  const I=P7_IDEAL[quad];
+
+  // Inhibitors: criticality(+ny)→H↓, inclusivity(-ny)→H↑
+  //             sensibility(+nx)→S↓, rationality(-nx)→S↑
+  const newH=Math.max(0.20,Math.min(0.85, P7_BASE_INH.H - ny*0.25));
+  const newS=Math.max(0.15,Math.min(0.65, P7_BASE_INH.S - nx*0.20));
+
+  return {cx,cy,nx,ny,dist,strength,quad,I,newH,newS};
+}
+
+// ── ETI_public: Euclidean distance from programme vector to I ──
+function p7ScoreProg(prog, ppi){
+  const I=ppi.I;
+  const DIMS=['V','D','F','U','O'];
+  const MAX_D=Math.sqrt(5);
+  return prog.map(function(p){
+    const v=p.v;
+    const dist=Math.sqrt(DIMS.reduce(function(s,d,k){return s+Math.pow(v[k]-I[d],2);},0));
+    const score=1.0-dist/MAX_D;
+    const eti_pub=score*(1-ppi.newH*v[5])*(1-ppi.newS*v[6]);
+    return Object.assign({},p,{eti_adj:+eti_pub.toFixed(3),delta:+(eti_pub-p.eti).toFixed(3),score:+score.toFixed(3)});
+  });
+}
+
+// ── Lightweight MDS (80 iter) ─────────────────────────────────
+function p7AdjVec(v,I){
+  return ['V','D','F','U','O'].map(function(d,k){return Math.min(1.0,v[k]*(I[d]/0.5));});
+}
+function p7RelDist(va,vb){
+  var rW=[0.35,0.35,0.05,0.10,0.15];
+  return Math.sqrt(rW.reduce(function(s,w,k){return s+w*Math.pow(va[k]-vb[k],2);},0));
+}
+function p7MDS(vecs){
+  var n=vecs.length;
+  var D=[];
+  for(var i=0;i<n;i++){D[i]=[];for(var j=0;j<n;j++) D[i][j]=p7RelDist(vecs[i],vecs[j]);}
+  var seed=42;
+  var rand=function(){seed=(seed*1664525+1013904223)>>>0;return seed/0xffffffff-0.5;};
+  var pos=Array.from({length:n},function(){return[rand()*0.35,rand()*0.35];});
+  for(var it=0;it<80;it++){
+    var lr=0.028*(1-it/160);
+    for(var i=0;i<n;i++){
+      var gx=0,gy=0;
+      for(var j=0;j<n;j++){
+        if(i===j) continue;
+        var dx=pos[i][0]-pos[j][0],dy=pos[i][1]-pos[j][1];
+        var cur=Math.sqrt(dx*dx+dy*dy)+1e-9;
+        var err=(cur-D[i][j])/cur;
+        gx+=err*dx;gy+=err*dy;
+      }
+      pos[i][0]-=lr*gx;pos[i][1]-=lr*gy;
+    }
+  }
+  var mx=pos.reduce(function(s,p){return s+p[0];},0)/n;
+  var my=pos.reduce(function(s,p){return s+p[1];},0)/n;
+  pos.forEach(function(p){p[0]-=mx;p[1]-=my;});
+  var sc=Math.max.apply(null,pos.map(function(p){return Math.max(Math.abs(p[0]),Math.abs(p[1]));}));
+  if(sc>0) pos.forEach(function(p){p[0]=p[0]/sc*0.45;p[1]=p[1]/sc*0.45;});
+  return pos;
+}
+function p7PublicMDS(adjProg,I){
+  var avecs=adjProg.map(function(p){return p7AdjVec(p.v,I);});
+  var pos=p7MDS(avecs);
+  return adjProg.map(function(p,i){return Object.assign({},p,{pub_x:pos[i][0],pub_y:pos[i][1]});});
+}
+
+// ── Load + render ─────────────────────────────────────────────
+var p7Data=null;
+
+async function loadPPI(){
+  try{
+    var r=await fetch(SB7+'/rest/v1/responses?select=x,y&limit=5000',
+      {headers:{'apikey':SK7,'Authorization':'Bearer '+SK7}});
+    var rows=await r.json();
+    if(!Array.isArray(rows)||rows.length===0){
+      document.getElementById('p7suite').innerHTML='<div class="dbox">No survey data yet.</div>';
+      return;
+    }
+    var cx=rows.reduce(function(s,d){return s+d.x;},0)/rows.length;
+    var cy=rows.reduce(function(s,d){return s+d.y;},0)/rows.length;
+    var ppi=p7Compute(cx,cy);
+    var adjProg=p7ScoreProg(PROG,ppi);
+    p7Data={ppi,adjProg,n:rows.length};
+    renderP7Suite(ppi,adjProg,rows.length);
+    setTimeout(function(){renderP7Compare(adjProg,ppi);},50);
+  }catch(e){
+    document.getElementById('p7suite').innerHTML='<div class="dbox">Error: '+e.message+'</div>';
+  }
+}
+
+// ── Section 2: ETI Suite ──────────────────────────────────────
+function renderP7Suite(ppi,adjProg,n){
+  var DIMS=['V','D','F','U','O'];
+  var DLB={V:'Visual',D:'Density',F:'Stability',U:'Agency',O:'Openness'};
+  var QL={sens_crit:'Sensibility × Criticality',rat_crit:'Rationality × Criticality',
+          sens_incl:'Sensibility × Inclusivity',rat_incl:'Rationality × Inclusivity'};
+  var qx=(ppi.cx+5)/10*180, qy=(1-(ppi.cy+5)/10)*180;
+
+  var h='<div class="two-col" style="margin-bottom:18px">';
+
+  // Left: centroid viz + summary
+  h+='<div class="card"><div class="cey">Public Centroid (n='+n+')</div>';
+  h+='<svg viewBox="0 0 180 180" width="180" style="display:block;margin:0 auto 12px">';
+  h+='<rect x="0" y="0" width="90" height="90" fill="#fff7ed" opacity=".5"/>';
+  h+='<rect x="90" y="0" width="90" height="90" fill="#eff6ff" opacity=".5"/>';
+  h+='<rect x="0" y="90" width="90" height="90" fill="#f0fdf4" opacity=".5"/>';
+  h+='<rect x="90" y="90" width="90" height="90" fill="#fdf4ff" opacity=".5"/>';
+  h+='<line x1="90" y1="0" x2="90" y2="180" stroke="#d4d2ce" stroke-width=".8"/>';
+  h+='<line x1="0" y1="90" x2="180" y2="90" stroke="#d4d2ce" stroke-width=".8"/>';
+  h+='<text x="90" y="11" text-anchor="middle" font-size="8" fill="#9c9894" font-family="Inter,sans-serif">Criticality</text>';
+  h+='<text x="90" y="175" text-anchor="middle" font-size="8" fill="#9c9894" font-family="Inter,sans-serif">Inclusivity</text>';
+  h+='<text x="4" y="93" font-size="8" fill="#9c9894" font-family="Inter,sans-serif">Rationality</text>';
+  h+='<text x="142" y="93" font-size="8" fill="#9c9894" font-family="Inter,sans-serif">Sensibility</text>';
+  h+='<circle cx="90" cy="90" r="'+(ppi.strength*60).toFixed(1)+'" fill="none" stroke="#ac1917" stroke-width=".6" opacity=".2"/>';
+  h+='<line x1="'+qx.toFixed(1)+'" y1="0" x2="'+qx.toFixed(1)+'" y2="180" stroke="#ac1917" stroke-width=".5" stroke-dasharray="3,3" opacity=".4"/>';
+  h+='<line x1="0" y1="'+qy.toFixed(1)+'" x2="180" y2="'+qy.toFixed(1)+'" stroke="#ac1917" stroke-width=".5" stroke-dasharray="3,3" opacity=".4"/>';
+  h+='<rect x="'+(qx-4).toFixed(1)+'" y="'+(qy-4).toFixed(1)+'" width="8" height="8" fill="#ac1917"/>';
+  h+='<rect x="'+(qx-2).toFixed(1)+'" y="'+(qy-2).toFixed(1)+'" width="4" height="4" fill="#fff"/>';
+  h+='</svg>';
+  h+='<div class="dbox" style="font-family:var(--mono);font-size:11px;line-height:1.9;color:var(--g60)">';
+  h+='Centroid: ('+ppi.cx.toFixed(2)+', '+ppi.cy.toFixed(2)+')<br>';
+  h+='Quadrant: <b style="color:var(--ink)">'+QL[ppi.quad]+'</b><br>';
+  h+='Strength: '+(ppi.strength*100).toFixed(0)+'%<br>';
+  h+='H inhibitor: '+P7_BASE_INH.H.toFixed(2)+' → <b>'+ppi.newH.toFixed(2)+'</b>'+(ppi.newH<P7_BASE_INH.H?' ↓ temple axis released':' ↑ axis respected')+'<br>';
+  h+='S inhibitor: '+P7_BASE_INH.S.toFixed(2)+' → <b>'+ppi.newS.toFixed(2)+'</b>'+(ppi.newS<P7_BASE_INH.S?' ↓ scatter increases':' ↑ order tighter');
+  h+='</div></div>';
+
+  // Right: ideal vector bars
+  h+='<div class="card"><div class="cey">Social Expectation Vector I</div>';
+  h+='<div style="font-size:11px;color:var(--g60);font-family:var(--mono);margin-bottom:14px">What the public expects this space to prioritise:</div>';
+  DIMS.forEach(function(d){
+    var val=ppi.I[d];
+    var clr=val>0.5?'#ac1917':'#6b6864';
+    h+='<div style="margin-bottom:10px">';
+    h+='<div style="display:flex;justify-content:space-between;margin-bottom:3px">';
+    h+='<span style="font-size:12px;font-weight:500">'+d+' <span style="font-weight:300;color:var(--g60)">'+DLB[d]+'</span></span>';
+    h+='<span style="font-family:var(--mono);font-size:11px;color:'+clr+'">'+val.toFixed(2)+'</span></div>';
+    h+='<div style="position:relative;height:5px;background:var(--g10);border-radius:3px">';
+    h+='<div style="position:absolute;left:0;top:0;height:100%;width:20%;background:var(--g20);border-radius:3px"></div>';
+    h+='<div style="position:absolute;left:0;top:0;height:100%;width:'+(val*100).toFixed(1)+'%;background:'+clr+';border-radius:3px;opacity:.8"></div>';
+    h+='</div></div>';
+  });
+  h+='</div></div>';
+
+  // ETI delta chart
+  var sorted=adjProg.slice().sort(function(a,b){return b.delta-a.delta;});
+  var maxD=Math.max.apply(null,adjProg.map(function(p){return Math.abs(p.delta);}));
+  h+='<div class="card" style="margin-top:18px"><div class="cey">ETI_public vs ETI_original — All Programmes</div>';
+  h+='<div style="font-size:11px;color:var(--g60);margin-bottom:14px;font-family:var(--mono)">Red = public ETI higher than original · Grey = lower</div>';
+  sorted.forEach(function(prog){
+    var bw=maxD>0?Math.abs(prog.delta)/(maxD)*200:0;
+    var clr=prog.delta>=0?'#ac1917':'#6b6864';
+    var sign=prog.delta>=0?'+':'';
+    var zc=ZC[prog.z];
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;padding-bottom:5px;border-bottom:.5px solid var(--g10)">';
+    h+='<div style="width:140px;font-size:11px;font-style:italic;color:'+zc+';flex-shrink:0;text-align:right">'+prog.n+'</div>';
+    h+='<div style="width:8px;height:8px;border-radius:50%;background:'+zc+';flex-shrink:0"></div>';
+    h+='<div style="position:relative;flex:1;height:7px;background:var(--g10);border-radius:2px">';
+    h+='<div style="position:absolute;left:0;top:0;width:'+bw.toFixed(0)+'px;height:100%;background:'+clr+';border-radius:2px"></div>';
+    h+='</div>';
+    h+='<div style="font-family:var(--mono);font-size:10px;color:'+clr+';width:46px">'+sign+prog.delta.toFixed(3)+'</div>';
+    h+='<div style="font-family:var(--mono);font-size:10px;color:var(--g60);width:36px">&rarr;'+prog.eti_adj.toFixed(3)+'</div>';
+    h+='</div>';
+  });
+  h+='</div>';
+
+  document.getElementById('p7suite').innerHTML=h;
+}
+
+// ── Section 3: Comparison radials ────────────────────────────
+function renderP7Compare(adjProg,ppi){
+  var box=document.getElementById('p7compare');
+  box.innerHTML='<div class="two-col">'+
+    '<div class="card"><div class="cey">Original ETI Radial</div>'+
+    '<div style="font-size:10px;color:var(--g40);font-family:var(--mono);margin-bottom:8px">Position = Relational Distance · Size = ETI</div>'+
+    '<svg id="p7radOrig" viewBox="0 0 520 460" width="100%"></svg></div>'+
+    '<div class="card"><div class="cey">Public ETI Radial</div>'+
+    '<div style="font-size:10px;color:var(--g40);font-family:var(--mono);margin-bottom:8px">Position = Public Relational Distance · Size = ETI_public</div>'+
+    '<svg id="p7radAdj" viewBox="0 0 520 460" width="100%"></svg></div>'+
+    '</div>';
+
+  // Draw original with original positions
+  setTimeout(function(){
+    var origP=PROG.map(function(p){return Object.assign({},p,{eti_adj:p.eti,delta:0,pub_x:p.x,pub_y:p.y});});
+    p7DrawRadial(origP,'p7radOrig',false);
+  },10);
+  // Draw public with recomputed MDS
+  setTimeout(function(){
+    var pubP=p7PublicMDS(adjProg,ppi.I);
+    p7DrawRadial(pubP,'p7radAdj',true);
+  },40);
+}
+
+// ── Radial drawing (self-contained, uses pub_x/pub_y) ─────────
+function p7DrawRadial(progs,svgId,usePublic){
+  var svg=document.getElementById(svgId);
+  if(!svg) return;
+  svg.innerHTML='';
+  var VW=520,VH=460,CX=VW/2,CY=VH/2,R=Math.min(VW,VH)/2-58;
+
+  var getX=function(p){return CX+(usePublic?p.pub_x:p.x)*R;};
+  var getY=function(p){return CY+(usePublic?p.pub_y:p.y)*R;};
+  var getR=function(p){return Math.max(11,Math.min(26,11+(usePublic?p.eti_adj:p.eti)*14+(p.fusion||0)*0.5));};
+
+  // Background grid
+  for(var v=-1;v<=1;v+=0.5){
+    se('line',{x1:CX+v*R,y1:CY-R,x2:CX+v*R,y2:CY+R,stroke:'#e8e6e2','stroke-width':'.3'},svg);
+    se('line',{x1:CX-R,y1:CY+v*R,x2:CX+R,y2:CY+v*R,stroke:'#e8e6e2','stroke-width':'.3'},svg);
+  }
+  se('line',{x1:CX,y1:CY-R-6,x2:CX,y2:CY+R+6,stroke:'#d4d2ce','stroke-width':'.5'},svg);
+  se('line',{x1:CX-R-6,y1:CY,x2:CX+R+6,y2:CY,stroke:'#d4d2ce','stroke-width':'.5'},svg);
+  st(CX,VH-6,'← Temple  ·  City →',{'text-anchor':'middle','font-family':ACUMIN,'font-size':'9','fill':'#9c9894'},svg);
+
+  // Edges
+  progs.forEach(function(pi,ii){
+    progs.forEach(function(pj,jj){
+      if(ii>=jj) return;
+      var ri=PROG.findIndex(function(p){return p.n===pi.n;});
+      var rj=PROG.findIndex(function(p){return p.n===pj.n;});
+      if(ri<0||rj<0) return;
+      var rel=relM[ri][rj];
+      if(!rel||rel==='NEUTRAL') return;
+      var stroke=rel==='COMPLEMENT'?'#4c4948':rel==='CONFLICT'?'#b0ada8':'#d4d2ce';
+      var dash=rel==='CONFLICT'?'4,3':'';
+      se('line',{x1:getX(pi),y1:getY(pi),x2:getX(pj),y2:getY(pj),
+        stroke:stroke,'stroke-width':'.5','stroke-dasharray':dash,opacity:'.18'},svg);
+    });
+  });
+
+  // Nodes
+  progs.forEach(function(p){
+    var x=getX(p),y=getY(p),r=getR(p);
+    var zc=ZC[p.z],zcl=ZCL[p.z];
+    var g=document.createElementNS(NS,'g');
+    se('circle',{cx:x,cy:y,r:r,fill:zcl,stroke:zc,'stroke-width':'.5'},g);
+    // delta indicator for public radial
+    if(usePublic&&Math.abs(p.delta)>0.01){
+      var bc=p.delta>0?'#ac1917':'#6b6864';
+      var sign=p.delta>0?'+':'';
+      se('rect',{x:x+r-1,y:y-r-10,width:30,height:10,fill:bc,rx:1,opacity:'.85'},g);
+      st(x+r+14,y-r-5,sign+p.delta.toFixed(2),
+        {'text-anchor':'middle','font-family':ACUMIN,'font-size':'6.5','fill':'#fff'},g);
+    }
+    // Name label
+    var words=p.n.split(' ');
+    var fsz=Math.max(5.5,Math.min(8,r*1.6/Math.max.apply(null,words.map(function(w){return w.length;}))*1.5));
+    if(words.length>=3&&r>=14){
+      var m=Math.ceil(words.length/2);
+      st(x,y-fsz*.55,words.slice(0,m).join(' '),
+        {'text-anchor':'middle','font-family':ACUMIN,'font-size':fsz,'fill':zc,'font-style':'italic'},g);
+      st(x,y+fsz*.9,words.slice(m).join(' '),
+        {'text-anchor':'middle','font-family':ACUMIN,'font-size':fsz,'fill':zc,'font-style':'italic'},g);
+    } else {
+      var short=p.n.length>12?p.n.slice(0,11)+'.':p.n;
+      st(x,y+fsz*.4,short,
+        {'text-anchor':'middle','font-family':ACUMIN,'font-size':fsz,'fill':zc,'font-style':'italic'},g);
+    }
+    var etival=usePublic?p.eti_adj:p.eti;
+    st(x,y+r+10,etival.toFixed(2),{'text-anchor':'middle','font-family':MONO,'font-size':'8.5','fill':zc},g);
+    svg.appendChild(g);
+  });
+}
+
+// ── Translation diagram ────────────────────────────────────────
+function drawP7Trans(){
+  var svg=document.getElementById('p7transSvg');
+  if(!svg||svg.dataset.drawn) return;
+  svg.dataset.drawn='1';
+  var W=500,H=320;
+  svg.innerHTML='';
+
+  // Column headers
+  var cols=[{x:70,lbl:'Public Survey',sub:'2 axes'},{x:250,lbl:'ETI Dimensions',sub:'V D F U O'},{x:430,lbl:'Inhibitors',sub:'H · S'}];
+  cols.forEach(function(c){
+    st(c.x,14,c.lbl,{'text-anchor':'middle','font-family':ACUMIN,'font-size':'11','font-weight':'500','fill':'var(--ink)'},svg);
+    st(c.x,26,c.sub,{'text-anchor':'middle','font-family':ACUMIN,'font-size':'9','fill':'var(--g60)'},svg);
+  });
+  se('line',{x1:20,y1:33,x2:480,y2:33,stroke:'var(--g20)','stroke-width':'.5'},svg);
+
+  // Public nodes
+  var pub=[
+    {id:'sens',x:55,y:75, lbl:'Sens.',sub:'+X',c:'#e46828'},
+    {id:'rat', x:55,y:145,lbl:'Rat.', sub:'−X',c:'#1887ab'},
+    {id:'crit',x:55,y:215,lbl:'Crit.', sub:'+Y',c:'#704776'},
+    {id:'incl',x:55,y:280,lbl:'Incl.', sub:'−Y',c:'#237f5d'},
+  ];
+  var dims=[
+    {id:'V',x:250,y:60, lbl:'V',sub:'Visual',c:'var(--A)'},
+    {id:'D',x:250,y:115,lbl:'D',sub:'Density',c:'var(--B)'},
+    {id:'F',x:250,y:165,lbl:'F',sub:'Stability',c:'var(--C)'},
+    {id:'U',x:250,y:215,lbl:'U',sub:'Agency', c:'var(--E)'},
+    {id:'O',x:250,y:265,lbl:'O',sub:'Openness',c:'var(--D)'},
+  ];
+  var inhs=[
+    {id:'H',x:430,y:140,lbl:'H',sub:'Historical',c:'#ac1917'},
+    {id:'S',x:430,y:220,lbl:'S',sub:'Social',   c:'#6b6864'},
+  ];
+
+  // Connections
+  var conns=[
+    ['sens','V',1],['rat','D',1],['rat','F',1],
+    ['crit','O',1],['incl','U',1],
+    ['sens','S',0,1],['rat','S',0,0],
+    ['crit','H',0,1],['incl','H',0,0],
+  ];
+  conns.forEach(function(c){
+    var from=pub.find(function(p){return p.id===c[0];});
+    var to=c[2]?dims.find(function(d){return d.id===c[1];}):inhs.find(function(i){return i.id===c[1];});
+    if(!from||!to) return;
+    var clr=c[3]?'#ac1917':'#9c9894';
+    se('line',{x1:from.x+18,y1:from.y,x2:to.x-18,y2:to.y,
+      stroke:clr,'stroke-width':c[2]?'1.2':'.6',opacity:c[2]?'.4':'.25'},svg);
+  });
+
+  // Draw nodes
+  pub.concat(dims).concat(inhs).forEach(function(n){
+    var g=document.createElementNS(NS,'g');
+    se('circle',{cx:n.x,cy:n.y,r:16,fill:n.c,opacity:'.1'},g);
+    se('circle',{cx:n.x,cy:n.y,r:16,fill:'none',stroke:n.c,'stroke-width':'1'},g);
+    st(n.x,n.y-2,n.lbl,{'text-anchor':'middle','font-family':ACUMIN,'font-size':'10','font-weight':'600','fill':n.c},g);
+    st(n.x,n.y+9, n.sub,{'text-anchor':'middle','font-family':ACUMIN,'font-size':'7.5','fill':'var(--g60)'},g);
+    svg.appendChild(g);
+  });
+  se('line',{x1:160,y1:38,x2:160,y2:300,stroke:'var(--g10)','stroke-width':'.5'},svg);
+  se('line',{x1:330,y1:38,x2:330,y2:300,stroke:'var(--g10)','stroke-width':'.5'},svg);
+}
+
+// ── Auto-trigger when p7 tab is opened ────────────────────────
+// Wrap showPanel WITHOUT chaining — use a one-time check instead
+document.addEventListener('p7open', function(){
+  drawP7Trans();
+  if(!p7Data) loadPPI();
+});
 
 </script></body></html>
