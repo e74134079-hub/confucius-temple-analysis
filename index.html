@@ -1366,9 +1366,11 @@ function renderPPI(p, adjProg, n){
   document.getElementById('p7content').innerHTML = html;
   // Also build comparison section
   buildP7Comparison(adjProg, p.I_base);
-  // Compute public MDS then draw adjusted radial in Suite tab
-  const adjWithMDS = computePublicMDS(adjProg, p.I_base);
-  drawAdjRadial(adjWithMDS, 'p7RadialSvg');
+  // Compute public MDS async
+  setTimeout(function(){
+    const adjWithMDS = computePublicMDS(adjProg, p.I_base);
+    drawAdjRadial(adjWithMDS, 'p7RadialSvg');
+  }, 10);
 }
 
 // Auto-load when switching to p7
@@ -1396,35 +1398,41 @@ function relDist(va, vb){
   return Math.sqrt(rW.reduce((s,w,k)=>s+w*(va[k]-vb[k])**2,0));
 }
 
-function runMDS(vecs, maxIter=300){
+function runMDS(vecs, maxIter=80){
   const n=vecs.length;
-  // Build distance matrix
-  const D=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>relDist(vecs[i],vecs[j])));
-  // Random init with fixed seed via simple LCG
+  // Pre-compute distance matrix once
+  const D=[];
+  for(let i=0;i<n;i++){
+    D[i]=[];
+    for(let j=0;j<n;j++) D[i][j]=relDist(vecs[i],vecs[j]);
+  }
+  // Fixed-seed LCG init
   let seed=42;
-  const rand=()=>{seed=(seed*1664525+1013904223)&0xffffffff;return(seed>>>0)/0xffffffff-0.5;};
-  const pos=Array.from({length:n},()=>[rand()*0.4,rand()*0.4]);
-  const lr=0.025;
+  const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/0xffffffff-0.5;};
+  const pos=Array.from({length:n},()=>[rand()*0.35,rand()*0.35]);
+  const lr=0.028;
+  // Smolinski stress-minimisation
   for(let it=0;it<maxIter;it++){
+    // adaptive learning rate
+    const lrt=lr*(1-it/maxIter*0.5);
     for(let i=0;i<n;i++){
       let gx=0,gy=0;
       for(let j=0;j<n;j++){
         if(i===j) continue;
         const dx=pos[i][0]-pos[j][0], dy=pos[i][1]-pos[j][1];
         const cur=Math.sqrt(dx*dx+dy*dy)+1e-9;
-        const tgt=D[i][j];
-        const err=(cur-tgt)/cur;
+        const err=(cur-D[i][j])/cur;
         gx+=err*dx; gy+=err*dy;
       }
-      pos[i][0]-=lr*gx; pos[i][1]-=lr*gy;
+      pos[i][0]-=lrt*gx; pos[i][1]-=lrt*gy;
     }
   }
-  // Centre and normalise
+  // Centre and normalise to ±0.45
   const mx=pos.reduce((s,p)=>s+p[0],0)/n;
   const my=pos.reduce((s,p)=>s+p[1],0)/n;
   pos.forEach(p=>{p[0]-=mx;p[1]-=my;});
-  const scale=Math.max(...pos.map(p=>Math.max(Math.abs(p[0]),Math.abs(p[1]))))||1;
-  pos.forEach(p=>{p[0]/=scale*2.2;p[1]/=scale*2.2;});
+  const maxR=Math.max(...pos.map(p=>Math.max(Math.abs(p[0]),Math.abs(p[1]))))||1;
+  pos.forEach(p=>{p[0]=p[0]/maxR*0.45;p[1]=p[1]/maxR*0.45;});
   return pos;
 }
 
@@ -1628,16 +1636,20 @@ function buildP7Comparison(adjProg, I_base){
     '<div style="font-size:10px;color:var(--g40);font-family:var(--mono);margin-bottom:8px">Position = Relational Distance (public-adjusted) · Size = ETI_public · Cluster shift shows reordering</div>' +
     '<svg id="radAdj" viewBox="0 0 520 460" width="100%"></svg></div>' +
     '</div>';
+  // Draw original immediately
   setTimeout(function(){
-    // Original: use original MDS positions, original ETI as size
-    const origProg = PROG.map(function(p){return Object.assign({},p,{eti_adj:p.eti,delta:0,pub_x:p.x,pub_y:p.y});});
+    const origProg = PROG.map(function(p){
+      return Object.assign({},p,{eti_adj:p.eti,delta:0,pub_x:p.x,pub_y:p.y});
+    });
     drawAdjRadial(origProg, 'radOrig');
-    // Public: compute NEW MDS from public-adjusted vectors
+  }, 10);
+  // Compute public MDS slightly later
+  setTimeout(function(){
     if(I_base){
       const pubProg = computePublicMDS(adjProg, I_base);
       drawAdjRadial(pubProg, 'radAdj');
     }
-  }, 80);
+  }, 40);
 }
 
 
