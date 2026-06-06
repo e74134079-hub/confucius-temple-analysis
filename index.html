@@ -649,7 +649,47 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
 
     <!-- S3: Comparison radials -->
     <div class="p7sec" id="p7-s3">
-      <div id="p7compare"><div class="dbox" style="color:var(--g60)">Load data in ETI Suite tab first.</div></div>
+      <!-- Top: live comparison from Supabase -->
+      <div style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--g40);margin-bottom:10px;">
+        Live Survey Comparison
+        <span style="text-transform:none;letter-spacing:0;font-weight:300;color:var(--g60)"> — right radial uses live survey centroid</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+        <label style="font-size:11px;color:var(--g60)">Spread</label>
+        <input type="range" id="p7spread" min="0.5" max="3" step="0.05" value="1" style="width:90px;">
+        <span id="p7spreadVal" style="font-size:11px;font-weight:500;min-width:28px;">1.0×</span>
+        <label style="font-size:11px;color:var(--g60);margin-left:8px">Node size</label>
+        <input type="range" id="p7nodeSize" min="0.5" max="2" step="0.1" value="1" style="width:90px;">
+        <span id="p7nodeSizeVal" style="font-size:11px;font-weight:500;min-width:28px;">1.0×</span>
+        <button onclick="p7ResetView()" style="font-family:var(--acumin);font-size:11px;padding:4px 10px;border:.5px solid var(--g20);background:none;cursor:pointer;border-radius:2px;color:var(--g60)">Reset</button>
+      </div>
+      <div id="p7compare" style="margin-bottom:24px;"><div class="dbox" style="color:var(--g60)">Load data in ETI Suite tab first.</div></div>
+
+      <div style="border-top:.5px solid var(--g10);margin-bottom:20px;"></div>
+
+      <!-- Bottom: interactive explorer -->
+      <div style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--g40);margin-bottom:10px;">
+        Interactive Explorer
+        <span style="text-transform:none;letter-spacing:0;font-weight:300;color:var(--g60)"> — drag to explore hypothetical centroid</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+        <label style="font-size:11px;color:var(--g60)">Contrast</label>
+        <input type="range" id="p7contrast" min="0.4" max="2.5" step="0.05" value="1" style="width:90px;">
+        <span id="p7contrastVal" style="font-size:11px;font-weight:500;min-width:28px;">1.0</span>
+      </div>
+      <div style="display:grid;grid-template-columns:240px 1fr;gap:12px;align-items:start;">
+        <div class="card">
+          <div class="cey">Hypothetical centroid</div>
+          <canvas id="p7quadCanvas" style="cursor:crosshair;display:block;width:100%;aspect-ratio:1;border-radius:3px;"></canvas>
+          <div style="font-size:10px;color:var(--g40);margin-top:4px;">Click or drag freely</div>
+          <div id="p7quadInfo" style="font-size:11px;font-family:var(--mono);color:var(--g60);line-height:1.9;margin-top:8px;">Centroid: (0.00, 0.00)</div>
+        </div>
+        <div class="card">
+          <div class="cey">Hypothetical public radial</div>
+          <canvas id="p7liveCanvas" style="display:block;width:100%;aspect-ratio:1;cursor:grab;border-radius:3px;"></canvas>
+          <div style="font-size:10px;color:var(--g40);margin-top:4px;">MDS recomputes on drag</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1094,16 +1134,36 @@ function p7Quad(cx,cy){
   return 'rat_incl';
 }
 
-// ── Main compute ──────────────────────────────────────────────
+// ── Bilinear interpolation of I from (cx,cy) ─────────────────
+// Four corner ideal vectors — bilinear blend gives continuous
+// variation across the entire -5..5 plane, not just per quadrant
+const P7_CORNERS = {
+  pp:{V:0.90,D:0.20,F:0.70,U:0.30,O:0.65}, // sens×crit  (+x,+y)
+  np:{V:0.20,D:0.85,F:0.40,U:0.20,O:0.90}, // rat×crit   (-x,+y)
+  pn:{V:0.75,D:0.20,F:0.30,U:0.90,O:0.65}, // sens×incl  (+x,-y)
+  nn:{V:0.20,D:0.90,F:0.85,U:0.40,O:0.20}, // rat×incl   (-x,-y)
+};
+const P7_DIMS=['V','D','F','U','O'];
+
+function p7BilinearI(cx,cy){
+  const rx=(cx+5)/10, ry=(cy+5)/10; // 0=rat/incl, 1=sens/crit
+  const I={};
+  P7_DIMS.forEach(d=>{
+    I[d]=P7_CORNERS.nn[d]*(1-rx)*(1-ry)
+        +P7_CORNERS.pn[d]*rx*(1-ry)
+        +P7_CORNERS.np[d]*(1-rx)*ry
+        +P7_CORNERS.pp[d]*rx*ry;
+  });
+  return I;
+}
+
 function p7Compute(cx, cy){
   const nx=cx/5, ny=cy/5;
   const dist=Math.sqrt(nx*nx+ny*ny);
   const strength=Math.min(dist/1.414,1.0);
   const quad=p7Quad(cx,cy);
-  const I=P7_IDEAL[quad];
+  const I=p7BilinearI(cx,cy);  // continuous bilinear — works within quadrant too
 
-  // Inhibitors: criticality(+ny)→H↓, inclusivity(-ny)→H↑
-  //             sensibility(+nx)→S↓, rationality(-nx)→S↑
   const newH=Math.max(0.20,Math.min(0.85, P7_BASE_INH.H - ny*0.25));
   const newS=Math.max(0.15,Math.min(0.65, P7_BASE_INH.S - nx*0.20));
 
@@ -1128,14 +1188,15 @@ function p7ScoreProg(prog, ppi){
 function p7AdjVec(v,I){
   return ['V','D','F','U','O'].map(function(d,k){return Math.min(1.0,v[k]*(I[d]/0.5));});
 }
-function p7RelDist(va,vb){
+function p7RelDist(va,vb,contrast){
   var rW=[0.35,0.35,0.05,0.10,0.15];
-  return Math.sqrt(rW.reduce(function(s,w,k){return s+w*Math.pow(va[k]-vb[k],2);},0));
+  var raw=Math.sqrt(rW.reduce(function(s,w,k){return s+w*Math.pow(va[k]-vb[k],2);},0));
+  return contrast?Math.pow(raw,contrast):raw;
 }
 function p7MDS(vecs){
   var n=vecs.length;
   var D=[];
-  for(var i=0;i<n;i++){D[i]=[];for(var j=0;j<n;j++) D[i][j]=p7RelDist(vecs[i],vecs[j]);}
+  for(var i=0;i<n;i++){D[i]=[];for(var j=0;j<n;j++) D[i][j]=p7RelDist(vecs[i],vecs[j],p7Contrast);}
   var seed=42;
   var rand=function(){seed=(seed*1664525+1013904223)>>>0;return seed/0xffffffff-0.5;};
   var pos=Array.from({length:n},function(){return[rand()*0.35,rand()*0.35];});
@@ -1168,6 +1229,9 @@ function p7PublicMDS(adjProg,I){
 
 // ── Load + render ─────────────────────────────────────────────
 var p7Data=null;
+var p7Spread=1, p7NodeScale=1, p7Contrast=1;
+var p7HypCx=0, p7HypCy=0, p7HypState=null;
+var p7Vst={orig:{ox:0,oy:0,sc:1},pub:{ox:0,oy:0,sc:1},live:{ox:0,oy:0,sc:1}};
 
 async function loadPPI(){
   try{
@@ -1184,7 +1248,7 @@ async function loadPPI(){
     var adjProg=p7ScoreProg(PROG,ppi);
     p7Data={ppi,adjProg,n:rows.length};
     renderP7Suite(ppi,adjProg,rows.length);
-    setTimeout(function(){renderP7Compare(adjProg,ppi);},50);
+    setTimeout(function(){renderP7Compare(adjProg,ppi);},60);
   }catch(e){
     document.getElementById('p7suite').innerHTML='<div class="dbox">Error: '+e.message+'</div>';
   }
@@ -1269,28 +1333,128 @@ function renderP7Suite(ppi,adjProg,n){
   document.getElementById('p7suite').innerHTML=h;
 }
 
-// ── Section 3: Comparison radials ────────────────────────────
+// ── Section 3: Comparison + Explorer ─────────────────────────
 function renderP7Compare(adjProg,ppi){
+  // Populate the two-canvas comparison (live survey data)
   var box=document.getElementById('p7compare');
-  box.innerHTML='<div class="two-col">'+
-    '<div class="card"><div class="cey">Original ETI Radial</div>'+
-    '<div style="font-size:10px;color:var(--g40);font-family:var(--mono);margin-bottom:8px">Position = Relational Distance · Size = ETI</div>'+
-    '<svg id="p7radOrig" viewBox="0 0 520 460" width="100%"></svg></div>'+
-    '<div class="card"><div class="cey">Public ETI Radial</div>'+
-    '<div style="font-size:10px;color:var(--g40);font-family:var(--mono);margin-bottom:8px">Position = Public Relational Distance · Size = ETI_public</div>'+
-    '<svg id="p7radAdj" viewBox="0 0 520 460" width="100%"></svg></div>'+
+  box.innerHTML=
+    '<div class="two-col">'+
+    '<div class="card"><div class="cey">Original ETI · Designer's model</div>'+
+    '<div style="font-size:10px;color:var(--g40);font-family:var(--mono);margin-bottom:6px">Position = Relational Distance · Size = ETI</div>'+
+    '<canvas id="p7canvOrig" style="display:block;width:100%;aspect-ratio:1;cursor:grab;border-radius:3px;"></canvas></div>'+
+    '<div class="card"><div class="cey">Public ETI · Live survey centroid</div>'+
+    '<div style="font-size:10px;color:var(--g40);font-family:var(--mono);margin-bottom:6px">Position = Public Relational Distance · Size = ETI_public · '+
+    '<span style="color:#ac1917">n='+p7Data.n+' responses</span></div>'+
+    '<canvas id="p7canvPub" style="display:block;width:100%;aspect-ratio:1;cursor:grab;border-radius:3px;"></canvas></div>'+
     '</div>';
 
-  // Draw original with original positions
   setTimeout(function(){
+    p7InitCanvas('p7canvOrig'); p7InitCanvas('p7canvPub');
     var origP=PROG.map(function(p){return Object.assign({},p,{eti_adj:p.eti,delta:0,pub_x:p.x,pub_y:p.y});});
-    p7DrawRadial(origP,'p7radOrig',false);
-  },10);
-  // Draw public with recomputed MDS
-  setTimeout(function(){
+    p7DrawCanvas('p7canvOrig',origP,false,'orig');
     var pubP=p7PublicMDS(adjProg,ppi.I);
-    p7DrawRadial(pubP,'p7radAdj',true);
-  },40);
+    p7DrawCanvas('p7canvPub',pubP,true,'pub');
+    p7AddPanZoom('p7canvOrig','orig',false);
+    p7AddPanZoom('p7canvPub','pub',true);
+  },20);
+
+  // Wire up spread/nodesize sliders for comparison canvases
+  var sp=document.getElementById('p7spread');
+  var ns=document.getElementById('p7nodeSize');
+  if(sp) sp.oninput=function(){
+    p7Spread=parseFloat(this.value);
+    document.getElementById('p7spreadVal').textContent=p7Spread.toFixed(1)+'×';
+    p7RedrawComparison();
+  };
+  if(ns) ns.oninput=function(){
+    p7NodeScale=parseFloat(this.value);
+    document.getElementById('p7nodeSizeVal').textContent=p7NodeScale.toFixed(1)+'×';
+    p7RedrawComparison();
+  };
+
+  // Init explorer
+  setTimeout(p7InitExplorer, 40);
+}
+
+// Cache for comparison canvases
+var _p7origProgs=null, _p7pubProgs=null;
+function p7RedrawComparison(){
+  if(_p7origProgs) p7DrawCanvas('p7canvOrig',_p7origProgs,false,'orig');
+  if(_p7pubProgs) p7DrawCanvas('p7canvPub',_p7pubProgs,true,'pub');
+  if(p7HypState) p7DrawCanvas('p7liveCanvas',p7HypState.progs,true,'live');
+}
+
+function p7ResetView(){
+  Object.keys(p7Vst).forEach(function(k){p7Vst[k]={ox:0,oy:0,sc:1};});
+  p7Spread=1;p7NodeScale=1;
+  ['p7spread','p7nodeSize'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=1;});
+  ['p7spreadVal','p7nodeSizeVal'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='1.0×';});
+  p7RedrawComparison();
+}
+
+// ── Explorer (hypothetical centroid) ──────────────────────────
+var p7QDrag=false, p7MdsTimer=null;
+
+function p7InitExplorer(){
+  var qc=document.getElementById('p7quadCanvas');
+  var lc=document.getElementById('p7liveCanvas');
+  if(!qc||!lc) return;
+  p7InitCanvas('p7liveCanvas');
+  p7DrawQuad(0,0);
+  p7HypState=p7ComputeWithContrast(0,0);
+  p7DrawCanvas('p7liveCanvas',p7HypState.progs,true,'live');
+  p7AddPanZoom('p7liveCanvas','live',true);
+
+  var ct=document.getElementById('p7contrast');
+  if(ct) ct.oninput=function(){
+    p7Contrast=parseFloat(this.value);
+    document.getElementById('p7contrastVal').textContent=p7Contrast.toFixed(1);
+    if(p7HypState){
+      p7HypState=p7ComputeWithContrast(p7HypCx,p7HypCy);
+      p7DrawCanvas('p7liveCanvas',p7HypState.progs,true,'live');
+    }
+  };
+
+  function qFromEv(e){
+    var r=qc.getBoundingClientRect();
+    var S=qc.offsetWidth||220;
+    var px=(e.clientX-r.left)/r.width*S,py=(e.clientY-r.top)/r.height*S;
+    return{x:Math.max(-5,Math.min(5,parseFloat(((px/S)*10-5).toFixed(2)))),
+           y:Math.max(-5,Math.min(5,parseFloat(((1-py/S)*10-5).toFixed(2))))};
+  }
+  function applyHyp(cx,cy){
+    p7HypCx=cx;p7HypCy=cy;
+    p7DrawQuad(cx,cy);
+    clearTimeout(p7MdsTimer);
+    p7MdsTimer=setTimeout(function(){
+      p7HypState=p7ComputeWithContrast(cx,cy);
+      p7DrawCanvas('p7liveCanvas',p7HypState.progs,true,'live');
+      var I=p7HypState.I;
+      var topDims=P7_DIMS.map(function(d){return{d:d,v:I[d]};}).sort(function(a,b){return b.v-a.v;}).slice(0,2)
+                  .map(function(e){var lb={V:'Visual',D:'Density',F:'Stability',U:'Agency',O:'Openness'};return e.d+' '+lb[e.d];}).join(' · ');
+      var el=document.getElementById('p7quadInfo');
+      if(el) el.innerHTML='Centroid: ('+cx.toFixed(2)+', '+cy.toFixed(2)+')<br>H: '+
+        p7HypState.newH.toFixed(2)+'  S: '+p7HypState.newS.toFixed(2)+'<br>Top dims: <b>'+topDims+'</b>';
+    },25);
+  }
+  qc.addEventListener('mousedown',function(e){p7QDrag=true;var{x,y}=qFromEv(e);applyHyp(x,y);});
+  qc.addEventListener('mousemove',function(e){if(!p7QDrag)return;var{x,y}=qFromEv(e);applyHyp(x,y);});
+  qc.addEventListener('mouseup',function(){p7QDrag=false;});
+  qc.addEventListener('mouseleave',function(){p7QDrag=false;});
+  qc.addEventListener('touchstart',function(e){p7QDrag=true;var{x,y}=qFromEv(e.touches[0]);applyHyp(x,y);},{passive:true});
+  qc.addEventListener('touchmove',function(e){if(!p7QDrag)return;var{x,y}=qFromEv(e.touches[0]);applyHyp(x,y);},{passive:true});
+  qc.addEventListener('touchend',function(){p7QDrag=false;});
+}
+
+function p7ComputeWithContrast(cx,cy){
+  var ppi=p7Compute(cx,cy);
+  var avecs=PROG.map(function(p){return p7AdjVec(p.v,ppi.I);});
+  var pos=p7MDS(avecs);  // uses global p7Contrast
+  return Object.assign({},ppi,{progs:PROG.map(function(p,i){
+    var sc=p7DistScore(p.v,ppi.I);
+    var ea=+(sc*(1-ppi.newH*p.v[5])*(1-ppi.newS*p.v[6])).toFixed(3);
+    return Object.assign({},p,{eti_adj:ea,delta:+(ea-p.eti).toFixed(3),pub_x:pos[i][0],pub_y:pos[i][1]});
+  })});
 }
 
 // ── Radial drawing (self-contained, uses pub_x/pub_y) ─────────
@@ -1361,6 +1525,153 @@ function p7DrawRadial(progs,svgId,usePublic){
     st(x,y+r+10,etival.toFixed(2),{'text-anchor':'middle','font-family':MONO,'font-size':'8.5','fill':zc},g);
     svg.appendChild(g);
   });
+}
+
+
+// ── Canvas-based radial drawing (replaces SVG for S3) ─────────
+function p7InitCanvas(id){
+  var c=document.getElementById(id);if(!c)return;
+  var dpr=window.devicePixelRatio||1;
+  var w=c.offsetWidth||300;
+  c.width=w*dpr;c.height=w*dpr;
+  c.style.width=w+'px';c.style.height=w+'px';
+  var ctx=c.getContext('2d');ctx.scale(dpr,dpr);
+}
+
+function p7CanvasBase(ctx,W,H,CX,CY,eff){
+  ctx.save();
+  // concentric circles
+  ctx.strokeStyle='rgba(180,178,172,0.2)';ctx.lineWidth=0.5;ctx.setLineDash([2,5]);
+  [0.25,0.5,0.75,1.0].forEach(function(r){ctx.beginPath();ctx.arc(CX,CY,eff*r,0,Math.PI*2);ctx.stroke();});
+  // grid
+  ctx.strokeStyle='rgba(200,198,194,0.12)';ctx.setLineDash([]);ctx.lineWidth=0.4;
+  for(var v=-1;v<=1;v+=0.5){
+    ctx.beginPath();ctx.moveTo(CX+v*eff,CY-eff);ctx.lineTo(CX+v*eff,CY+eff);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(CX-eff,CY+v*eff);ctx.lineTo(CX+eff,CY+v*eff);ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  ctx.strokeStyle='rgba(155,153,149,0.38)';ctx.lineWidth=0.6;
+  ctx.beginPath();ctx.moveTo(CX,CY-eff-8);ctx.lineTo(CX,CY+eff+8);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(CX-eff-8,CY);ctx.lineTo(CX+eff+8,CY);ctx.stroke();
+  ctx.restore();
+}
+
+function p7DrawCanvas(id,progs,usePublic,vstKey){
+  var canvas=document.getElementById(id);if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  var dpr=window.devicePixelRatio||1;
+  var W=canvas.width/dpr,H=canvas.height/dpr;
+  var st=p7Vst[vstKey]||{ox:0,oy:0,sc:1};
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.save();ctx.scale(dpr,dpr);
+
+  var R=Math.min(W,H)/2-46;
+  var CX=W/2+st.ox,CY=H/2+st.oy,eff=R*p7Spread*st.sc;
+  p7CanvasBase(ctx,W,H,CX,CY,eff);
+
+  var gx=function(p){return CX+(usePublic?p.pub_x:p.x)*eff;};
+  var gy=function(p){return CY+(usePublic?p.pub_y:p.y)*eff;};
+  var gr=function(p){return Math.max(7,Math.min(22,(7+(usePublic?p.eti_adj:p.eti)*13)*p7NodeScale));};
+
+  var ZC2={A:'#e4007f',B:'#00a0e9',C:'#f39800'};
+  var ZCL2={A:'#f9cce5',B:'#cceef9',C:'#fde9c4'};
+
+  // Cache for redraw
+  if(vstKey==='orig') _p7origProgs=progs;
+  if(vstKey==='pub')  _p7pubProgs=progs;
+
+  // edges
+  progs.forEach(function(pi,ii){progs.forEach(function(pj,jj){
+    if(ii>=jj)return;
+    ctx.strokeStyle='rgba(150,148,144,0.09)';ctx.lineWidth=0.5;ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(gx(pi),gy(pi));ctx.lineTo(gx(pj),gy(pj));ctx.stroke();
+  });});
+
+  // nodes
+  progs.forEach(function(p){
+    var x=gx(p),y=gy(p),r=gr(p);
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle=ZCL2[p.z];ctx.fill();
+    ctx.strokeStyle=ZC2[p.z];ctx.lineWidth=0.7;ctx.stroke();
+
+    if(usePublic&&Math.abs(p.delta)>0.008){
+      var bc=p.delta>0?'#ac1917':'#888780';
+      ctx.fillStyle=bc;ctx.font='500 6.5px Inter,sans-serif';ctx.textAlign='left';
+      ctx.fillText((p.delta>0?'+':'')+p.delta.toFixed(2),x+r+2,y-r+5);
+    }
+    var words=p.n.split(' ');
+    var fsz=Math.max(6,Math.min(8.5,r*1.3));
+    ctx.fillStyle=ZC2[p.z];ctx.font='400 '+fsz+'px Inter,sans-serif';ctx.textAlign='center';
+    if(words.length>=3&&r>=11){
+      var m=Math.ceil(words.length/2);
+      ctx.fillText(words.slice(0,m).join(' '),x,y-fsz*.3);
+      ctx.fillText(words.slice(m).join(' '),x,y+fsz*.9);
+    } else ctx.fillText(p.n,x,y+fsz*.4);
+    ctx.fillStyle='rgba(100,98,95,0.6)';ctx.font='400 7.5px "DM Mono",monospace';ctx.textAlign='center';
+    ctx.fillText((usePublic?p.eti_adj:p.eti).toFixed(2),x,y+r+9);
+  });
+  ctx.restore();
+}
+
+function p7AddPanZoom(id,key,usePublic){
+  var c=document.getElementById(id);if(!c)return;
+  var drag=false,lx=0,ly=0;
+  c.addEventListener('mousedown',function(e){drag=true;lx=e.clientX;ly=e.clientY;});
+  c.addEventListener('mousemove',function(e){
+    if(!drag)return;
+    p7Vst[key].ox+=e.clientX-lx;p7Vst[key].oy+=e.clientY-ly;
+    lx=e.clientX;ly=e.clientY;
+    var progs=key==='orig'?(_p7origProgs||PROG.map(function(p){return Object.assign({},p,{eti_adj:p.eti,delta:0,pub_x:p.x,pub_y:p.y});})):
+              key==='pub'?(_p7pubProgs||[]):(p7HypState?p7HypState.progs:[]);
+    p7DrawCanvas(id,progs,usePublic,key);
+  });
+  c.addEventListener('mouseup',function(){drag=false;});
+  c.addEventListener('mouseleave',function(){drag=false;});
+  c.addEventListener('wheel',function(e){
+    e.preventDefault();
+    p7Vst[key].sc*=e.deltaY<0?1.1:0.9;
+    p7Vst[key].sc=Math.max(0.2,Math.min(5,p7Vst[key].sc));
+    var progs=key==='orig'?(_p7origProgs||[]):key==='pub'?(_p7pubProgs||[]):(p7HypState?p7HypState.progs:[]);
+    p7DrawCanvas(id,progs,usePublic,key);
+  },{passive:false});
+}
+
+function p7DrawQuad(cx,cy){
+  var qc=document.getElementById('p7quadCanvas');if(!qc)return;
+  var dpr=window.devicePixelRatio||1;
+  var S=qc.offsetWidth||220;
+  qc.width=S*dpr;qc.height=S*dpr;qc.style.width=S+'px';qc.style.height=S+'px';
+  var ctx=qc.getContext('2d');ctx.scale(dpr,dpr);
+  // quadrant tints
+  var tints=['rgba(255,247,237,.45)','rgba(239,246,255,.45)','rgba(240,253,244,.45)','rgba(253,244,255,.45)'];
+  [[0,0],[1,0],[0,1],[1,1]].forEach(function(ab,i){ctx.fillStyle=tints[i];ctx.fillRect(ab[0]*S/2,ab[1]*S/2,S/2,S/2);});
+  // dots
+  ctx.fillStyle='rgba(180,178,172,0.35)';
+  for(var i=0;i<=10;i++)for(var j=0;j<=10;j++){ctx.beginPath();ctx.arc(i*S/10,j*S/10,0.7,0,Math.PI*2);ctx.fill();}
+  // axes
+  ctx.strokeStyle='rgba(155,153,149,0.45)';ctx.lineWidth=0.7;
+  ctx.beginPath();ctx.moveTo(S/2,0);ctx.lineTo(S/2,S);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,S/2);ctx.lineTo(S,S/2);ctx.stroke();
+  // labels
+  ctx.fillStyle='rgba(150,148,145,0.85)';ctx.font='8px Inter,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Criticality',S/2,11);ctx.fillText('Inclusivity',S/2,S-4);
+  ctx.textAlign='left';ctx.fillText('Rationality',3,S/2+4);
+  ctx.textAlign='right';ctx.fillText('Sensibility',S-3,S/2+4);
+  ctx.fillStyle='rgba(180,178,174,0.6)';ctx.font='7px Inter,sans-serif';
+  ctx.textAlign='right';ctx.fillText('sens×crit',S-5,17);
+  ctx.textAlign='left';ctx.fillText('rat×crit',5,17);
+  ctx.textAlign='right';ctx.fillText('sens×incl',S-5,S-6);
+  ctx.textAlign='left';ctx.fillText('rat×incl',5,S-6);
+  // centroid
+  if(cx!==null){
+    var px=(cx+5)/10*S,py=(1-(cy+5)/10)*S;
+    ctx.strokeStyle='rgba(172,25,23,0.18)';ctx.lineWidth=0.6;ctx.setLineDash([2,3]);
+    ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,S);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(S,py);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#ac1917';ctx.fillRect(px-4,py-4,8,8);
+    ctx.fillStyle='#fff';ctx.fillRect(px-1.5,py-1.5,3,3);
+  }
 }
 
 // ── Translation diagram ────────────────────────────────────────
