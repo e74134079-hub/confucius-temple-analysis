@@ -1365,8 +1365,10 @@ function renderPPI(p, adjProg, n){
 
   document.getElementById('p7content').innerHTML = html;
   // Also build comparison section
-  buildP7Comparison(adjProg);
-  drawAdjRadial(adjProg, 'p7RadialSvg');
+  buildP7Comparison(adjProg, p.I_base);
+  // Compute public MDS then draw adjusted radial in Suite tab
+  const adjWithMDS = computePublicMDS(adjProg, p.I_base);
+  drawAdjRadial(adjWithMDS, 'p7RadialSvg');
 }
 
 // Auto-load when switching to p7
@@ -1378,6 +1380,60 @@ showPanel = function(id, btn){
 
 
 // ── drawAdjRadial: radial diagram using adjusted ETI ─────────────
+
+// ── Public MDS: recompute positions from adjusted vectors ─────────
+function adjustedVec(v, I){
+  const dims=['V','D','F','U','O'];
+  // Scale each dimension by how much the public expects it
+  // I[d] ranges 0.2 (neutral) to 0.9 (strongly expected)
+  // scale = I[d]/0.5 → neutral gives 0.4x, max gives 1.8x
+  return dims.map((d,k)=>Math.min(1.0, v[k] * (I[d]/0.5)));
+}
+
+function relDist(va, vb){
+  // Same relW as main radial
+  const rW=[0.35,0.35,0.05,0.10,0.15];
+  return Math.sqrt(rW.reduce((s,w,k)=>s+w*(va[k]-vb[k])**2,0));
+}
+
+function runMDS(vecs, maxIter=300){
+  const n=vecs.length;
+  // Build distance matrix
+  const D=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>relDist(vecs[i],vecs[j])));
+  // Random init with fixed seed via simple LCG
+  let seed=42;
+  const rand=()=>{seed=(seed*1664525+1013904223)&0xffffffff;return(seed>>>0)/0xffffffff-0.5;};
+  const pos=Array.from({length:n},()=>[rand()*0.4,rand()*0.4]);
+  const lr=0.025;
+  for(let it=0;it<maxIter;it++){
+    for(let i=0;i<n;i++){
+      let gx=0,gy=0;
+      for(let j=0;j<n;j++){
+        if(i===j) continue;
+        const dx=pos[i][0]-pos[j][0], dy=pos[i][1]-pos[j][1];
+        const cur=Math.sqrt(dx*dx+dy*dy)+1e-9;
+        const tgt=D[i][j];
+        const err=(cur-tgt)/cur;
+        gx+=err*dx; gy+=err*dy;
+      }
+      pos[i][0]-=lr*gx; pos[i][1]-=lr*gy;
+    }
+  }
+  // Centre and normalise
+  const mx=pos.reduce((s,p)=>s+p[0],0)/n;
+  const my=pos.reduce((s,p)=>s+p[1],0)/n;
+  pos.forEach(p=>{p[0]-=mx;p[1]-=my;});
+  const scale=Math.max(...pos.map(p=>Math.max(Math.abs(p[0]),Math.abs(p[1]))))||1;
+  pos.forEach(p=>{p[0]/=scale*2.2;p[1]/=scale*2.2;});
+  return pos;
+}
+
+function computePublicMDS(adjProg, I){
+  const adjVecs=adjProg.map(p=>adjustedVec(p.v, I));
+  const pos=runMDS(adjVecs);
+  return adjProg.map((p,i)=>({...p, pub_x:pos[i][0], pub_y:pos[i][1]}));
+}
+
 function drawAdjRadial(adjProg, svgId){
   const svg = document.getElementById(svgId);
   if(!svg) return;
@@ -1385,8 +1441,10 @@ function drawAdjRadial(adjProg, svgId){
 
   const VW=560, VH=500, CX=VW/2, CY=VH/2, R=Math.min(VW,VH)/2-56;
 
-  function px(n){ return CX + n.x*R; }
-  function py(n){ return CY + n.y*R; }
+  // Use public MDS positions if available, else fall back to original
+  const usePublic = adjProg[0] && adjProg[0].pub_x !== undefined;
+  function px(n){ return CX + (usePublic ? n.pub_x : n.x)*R; }
+  function py(n){ return CY + (usePublic ? n.pub_y : n.y)*R; }
 
   // base radius from adjusted ETI
   function nr(n){ return Math.max(11, Math.min(26, 11 + n.eti_adj*14 + (n.fusion||0)*0.5)); }
@@ -1559,18 +1617,27 @@ showPanel = function(id, btn){
   if(id==='p8') { setTimeout(buildP8, 50); }
 };
 
-function buildP7Comparison(adjProg){
+function buildP7Comparison(adjProg, I_base){
   const box = document.getElementById('p7compare');
   if(!box) return;
   box.innerHTML = '<div class="two-col">' +
-    '<div class="card"><div class="cey">Original ETI Radial</div><svg id="radOrig" viewBox="0 0 480 420" width="100%"></svg></div>' +
-    '<div class="card"><div class="cey">Public-Adjusted ETI Radial</div><svg id="radAdj" viewBox="0 0 480 420" width="100%"></svg></div>' +
+    '<div class="card"><div class="cey">Original ETI — Designer's Model</div>' +
+    '<div style="font-size:10px;color:var(--g40);font-family:var(--mono);margin-bottom:8px">Position = Relational Distance (original ETI) · Size = ETI value</div>' +
+    '<svg id="radOrig" viewBox="0 0 520 460" width="100%"></svg></div>' +
+    '<div class="card"><div class="cey">Public ETI — Social Expectation</div>' +
+    '<div style="font-size:10px;color:var(--g40);font-family:var(--mono);margin-bottom:8px">Position = Relational Distance (public-adjusted) · Size = ETI_public · Cluster shift shows reordering</div>' +
+    '<svg id="radAdj" viewBox="0 0 520 460" width="100%"></svg></div>' +
     '</div>';
   setTimeout(function(){
-    // draw original using existing buildDist approach
-    drawAdjRadial(PROG.map(function(p){return Object.assign({},p,{eti_adj:p.eti,delta:0});}), 'radOrig');
-    drawAdjRadial(adjProg, 'radAdj');
-  }, 50);
+    // Original: use original MDS positions, original ETI as size
+    const origProg = PROG.map(function(p){return Object.assign({},p,{eti_adj:p.eti,delta:0,pub_x:p.x,pub_y:p.y});});
+    drawAdjRadial(origProg, 'radOrig');
+    // Public: compute NEW MDS from public-adjusted vectors
+    if(I_base){
+      const pubProg = computePublicMDS(adjProg, I_base);
+      drawAdjRadial(pubProg, 'radAdj');
+    }
+  }, 80);
 }
 
 
