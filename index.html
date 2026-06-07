@@ -689,13 +689,13 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
       <div style="display:grid;grid-template-columns:220px 1fr;gap:12px;align-items:start;">
         <div class="card">
           <div class="cey">Hypothetical centroid</div>
-          <canvas id="p7quadC" style="cursor:crosshair;display:block;width:100%;aspect-ratio:1;border-radius:3px;"></canvas>
+          <canvas id="p7quadC" style="cursor:crosshair;display:block;width:100%;height:200px;border-radius:3px;"></canvas>
           <div style="font-size:10px;color:var(--g40);margin-top:4px;">Click or drag freely</div>
           <div id="p7quadInfo" style="font-size:11px;font-family:var(--mono);color:var(--g60);line-height:1.9;margin-top:8px;">Centroid: (0.00, 0.00)</div>
         </div>
         <div class="card">
           <div class="cey">Hypothetical public radial</div>
-          <canvas id="p7liveC" style="display:block;width:100%;aspect-ratio:1;cursor:grab;border-radius:3px;"></canvas>
+          <canvas id="p7liveC" style="display:block;width:100%;height:370px;cursor:grab;border-radius:3px;"></canvas>
           <div style="font-size:10px;color:var(--g40);margin-top:4px;">MDS recomputes on drag</div>
         </div>
       </div>
@@ -1572,11 +1572,13 @@ function p7EnsC(id){
   var dpr=window.devicePixelRatio||1;
   var rect=c.getBoundingClientRect();
   var w=rect.width||c.offsetWidth;
+  var h=rect.height||c.offsetHeight;
   if(!w||w<20){var par=c.parentElement;if(par){var pr=par.getBoundingClientRect();w=pr.width-28;}}
   if(!w||w<20) w=340;
-  var newW=Math.round(w*dpr),newH=Math.round(w*dpr);
+  if(!h||h<20) h=w;
+  var newW=Math.round(w*dpr),newH=Math.round(h*dpr);
   if(c.width===newW&&c.height===newH) return true;
-  c.width=newW;c.height=newH;c.style.width=w+'px';c.style.height=w+'px';
+  c.width=newW;c.height=newH;c.style.width=w+'px';c.style.height=h+'px';
   return true;
 }
 function p7DrawBase(ctx,W,H,CX,CY,eff){
@@ -1604,7 +1606,7 @@ function p7DrawC(id,progs,usePublic,vst,sp,ns){
   var W=c.width/dpr,H=c.height/dpr;
   ctx.clearRect(0,0,c.width,c.height);
   ctx.save();ctx.scale(dpr,dpr);
-  var R=Math.max(20,Math.min(W,H)/2-32);
+  var R=Math.max(20,Math.min(W,H)/2-28);
   var CX=W/2+(vst.ox||0),CY=H/2+(vst.oy||0);
   var eff=Math.max(1,R*(sp||1)*(vst.sc||1));
   p7DrawBase(ctx,W,H,CX,CY,eff);
@@ -1776,10 +1778,10 @@ function p7InitS3(){
     box.innerHTML='<div class="two-col">'+
       '<div class="card"><div class="cey">Original ETI · Designer\'s model</div>'+
       '<div style="font-size:10px;color:var(--g40);font-family:var(--mono);margin-bottom:6px">Position = Relational Distance · Size = ETI</div>'+
-      '<canvas id="p7cOrig" style="display:block;width:100%;aspect-ratio:1;cursor:grab;border-radius:3px;"></canvas></div>'+
+      '<canvas id="p7cOrig" style="display:block;width:100%;height:370px;cursor:grab;border-radius:3px;"></canvas></div>'+
       '<div class="card"><div class="cey">Public ETI · Live survey</div>'+
       '<div style="font-size:10px;color:var(--g40);font-family:var(--mono);margin-bottom:6px">Position = Public MDS · Size = ETI_public</div>'+
-      '<canvas id="p7cPub" style="display:block;width:100%;aspect-ratio:1;cursor:grab;border-radius:3px;"></canvas></div>'+
+      '<canvas id="p7cPub" style="display:block;width:100%;height:370px;cursor:grab;border-radius:3px;"></canvas></div>'+
       '</div>';
     setTimeout(function(){
       requestAnimationFrame(function(){
