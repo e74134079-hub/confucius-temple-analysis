@@ -309,6 +309,95 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
 }
 .lb-close:hover{color:#fff;border-color:rgba(255,255,255,.5);}
 
+/* ══════════════════════════════════════════════
+   MOBILE RWD  ≤ 768px
+   ══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── LANDING ── */
+  #landing {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  .lr { display: none; }
+  .ll {
+    padding: 32px 20px 28px;
+    min-height: 100svh;
+  }
+  .wordmark  { margin-bottom: 24px; font-size: 10px; }
+  .ltitle    { font-size: 26px; margin-bottom: 8px; }
+  .lsub      { font-size: 11px; margin-bottom: 24px; line-height: 1.7; }
+  .sec-label { margin-bottom: 8px; }
+
+  /* prog-grid: 1 欄 */
+  .prog-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .pb-img   { height: 64px; }
+  .pb-body  { padding: 8px 12px; }
+  .pb-label { font-size: 13px; }
+  .pb-sub   { font-size: 11px; }
+
+  /* sm-row: 直排 */
+  .sm-row { flex-direction: column; gap: 6px; }
+  .smb    { width: 100%; font-size: 12px; padding: 10px 14px; }
+
+  /* footer */
+  .lfoot        { padding-top: 16px; }
+  .lfoot > div  { flex-direction: column; gap: 8px; width: 100%; }
+  .enter-btn    { width: 100%; text-align: center; padding: 12px; font-size: 13px; }
+  .lfoot a      { width: 100%; text-align: center; padding: 11px; font-size: 12px; }
+
+  /* ── NAVBAR ── */
+  .dh {
+    padding: 0 12px;
+    height: auto;
+    min-height: 44px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .dh::-webkit-scrollbar { display: none; }
+  .dw { font-size: 10px; padding-right: 10px; margin-right: 4px; white-space: nowrap; }
+  .dn {
+    font-size: 10px;
+    padding: 0 10px;
+    height: 40px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ── PANEL CONTENT ── */
+  .dp { padding: 16px 14px 48px; }
+
+  /* two-col → single */
+  .two-col { grid-template-columns: 1fr; gap: 12px; }
+  .card    { padding: 12px 14px; }
+
+  /* Panel 7 canvas 縮小 */
+  #p7cOrig, #p7cPub, #p7liveC { height: 280px !important; }
+  #p7quadC { height: 150px !important; }
+
+  /* Temple overlay */
+  .to-thesis {
+    grid-template-columns: 1fr !important;
+    padding: 20px 16px !important;
+    gap: 16px !important;
+  }
+  .to-thesis-zh { display: none; }
+
+  .lb-grid { grid-template-columns: 1fr 1fr !important; }
+}
+
+@media (max-width: 480px) {
+  .ltitle  { font-size: 22px; }
+  .lb-grid { grid-template-columns: 1fr !important; }
+  .dn      { font-size: 9px; padding: 0 8px; }
+}
+
 </style>
 </head>
 <body>
