@@ -127,8 +127,10 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
   position:sticky;top:0;z-index:100;background:var(--w);
   border-bottom:.5px solid var(--g20);
   display:flex;align-items:center;
-  padding:0 20px;height:44px;gap:0;flex-wrap:nowrap;overflow-x:auto;
+  padding:0 16px;height:52px;gap:0;flex-wrap:nowrap;overflow-x:auto;
+  scrollbar-width:none;
 }
+.dh::-webkit-scrollbar{display:none;}
 .dw{
   font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
   color:var(--ink);padding-right:16px;margin-right:4px;
@@ -136,13 +138,14 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
 }
 .dnb{
   font-family:var(--acumin);font-size:var(--fs-sm);letter-spacing:.01em;
-  padding:0 12px;height:44px;border:none;background:transparent;
-  cursor:pointer;color:var(--g60);border-bottom:2px solid transparent;
-  transition:all .12s;white-space:nowrap;flex-shrink:0;
+  padding:0 14px;height:32px;margin:6px 3px;
+  border:none;border-radius:16px;background:transparent;
+  cursor:pointer;color:var(--g60);
+  transition:all .15s;white-space:nowrap;flex-shrink:0;
 }
-.dnb:hover{color:var(--ink);}
-.dnb.active{color:var(--ink);border-bottom-color:var(--ink);}
-.dsep{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--g40);padding:0 8px;border-left:.5px solid var(--g20);margin-left:4px;height:44px;display:flex;align-items:center;white-space:nowrap;flex-shrink:0;}
+.dnb:hover{background:var(--g10);color:var(--ink);}
+.dnb.active{background:var(--ink);color:var(--w);}
+.dsep{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--g40);padding:0 6px;display:flex;align-items:center;white-space:nowrap;flex-shrink:0;}
 
 .p7tab{font-family:var(--acumin);font-size:11px;letter-spacing:.04em;padding:9px 16px;border:none;background:none;cursor:pointer;color:var(--g60);border-bottom:2px solid transparent;transition:all .12s;}
 .p7tab:hover{color:var(--ink);}
@@ -308,6 +311,25 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
   cursor:pointer;padding:6px 12px;border:1px solid rgba(255,255,255,.2);border-radius:2px;
 }
 .lb-close:hover{color:#fff;border-color:rgba(255,255,255,.5);}
+
+/* ── PANEL BOTTOM NAV ── */
+.panel-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 0 0;margin-top:32px;
+  border-top:.5px solid var(--g10);
+}
+.pnav-btn{
+  font-family:var(--mono);font-size:var(--fs-xs);
+  color:var(--g60);background:none;
+  border:.5px solid var(--g20);border-radius:2px;
+  padding:8px 16px;cursor:pointer;
+  transition:all .15s;
+  display:flex;align-items:center;gap:6px;
+}
+.pnav-btn:hover{color:var(--ink);border-color:var(--ink);}
+.pnav-btn.disabled{opacity:0.25;pointer-events:none;}
+.pnav-label{font-family:var(--mono);font-size:10px;color:var(--g40);text-align:center;}
+
 
 /* ══════════════════════════════════════════════
    MOBILE RWD  ≤ 768px
@@ -595,7 +617,12 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
     <button class="dnb" data-panel="p6" onclick="showPanel('p6',this)">⑥ SAI × SCI</button>
     <span class="dsep">Public</span>
     <button class="dnb" data-panel="p7" onclick="showPanel('p7',this)">⑦ PPI</button>
-    <button class="dback" onclick="backToLanding()">← Overview</button>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:6px;flex-shrink:0;padding-left:12px;border-left:.5px solid var(--g20);">
+      <button id="prevPanelBtn" onclick="navPanel(-1)" style="width:30px;height:30px;border:.5px solid var(--g20);background:transparent;border-radius:50%;cursor:pointer;font-size:14px;color:var(--g60);display:flex;align-items:center;justify-content:center;transition:all .15s;" onmouseover="this.style.borderColor='var(--ink)';this.style.color='var(--ink)'" onmouseout="this.style.borderColor='var(--g20)';this.style.color='var(--g60)'">‹</button>
+      <span id="panelCounter" style="font-family:var(--mono);font-size:10px;color:var(--g40);min-width:28px;text-align:center;">1/7</span>
+      <button id="nextPanelBtn" onclick="navPanel(1)" style="width:30px;height:30px;border:.5px solid var(--g20);background:transparent;border-radius:50%;cursor:pointer;font-size:14px;color:var(--g60);display:flex;align-items:center;justify-content:center;transition:all .15s;" onmouseover="this.style.borderColor='var(--ink)';this.style.color='var(--ink)'" onmouseout="this.style.borderColor='var(--g20)';this.style.color='var(--g60)'">›</button>
+      <button class="dback" onclick="backToLanding()">← Overview</button>
+    </div>
     <a href="https://e74134079-hub.github.io/confucius-survey/" target="_blank"
        style="flex-shrink:0;margin-left:8px;font-family:var(--mono);font-size:11px;
               color:var(--g60);text-decoration:none;border:.5px solid var(--g20);
@@ -623,7 +650,9 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
         </div>
       </div>
     </div>
-  </div>
+  
+  <div class="panel-nav"><span></span><span class="pnav-label">1 / 7</span><button class="pnav-btn" onclick="showPanel('p2',document.querySelector('.dnb[data-panel=\"p2\"]'))"> Relationship Matrix →</button></div>
+</div>
 
   <div class="dp" id="p2">
     <div class="pey">Programme Analysis · 02</div>
@@ -635,7 +664,9 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
       <div class="leg-r"><span class="leg-sw" style="background:var(--dep)"></span><span class="leg-t">Dependence</span></div>
     </div>
     <div class="card"><div style="overflow-x:auto"><table class="hm-table" id="relMat"></table></div><div class="dbox" id="relDet" style="margin-top:10px">Click any cell for GH placement rule.</div></div>
-  </div>
+  
+  <div class="panel-nav"><button class="pnav-btn" onclick="showPanel('p1',document.querySelector('.dnb[data-panel=\"p1\"]'))">← ETI + Distance</button><span class="pnav-label">2 / 7</span><button class="pnav-btn" onclick="showPanel('p3',document.querySelector('.dnb[data-panel=\"p3\"]'))"> Radial — Programme →</button></div>
+</div>
 
   <div class="dp" id="p3">
     <div class="pey">Programme Analysis · 03</div>
@@ -653,7 +684,9 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
         <div style="margin-top:12px;font-family:var(--mono);font-size:var(--fs-sm);color:var(--g60);line-height:1.85">Double ring = center (Conservation Display)<br>Heavy ring = antipole (Bazaar)<br>Node size ∝ ETI + fusion score · 0.5pt stroke</div>
       </div>
     </div>
-  </div>
+  
+  <div class="panel-nav"><button class="pnav-btn" onclick="showPanel('p2',document.querySelector('.dnb[data-panel=\"p2\"]'))">← Relationship Matrix</button><span class="pnav-label">3 / 7</span><button class="pnav-btn" onclick="showPanel('p4',document.querySelector('.dnb[data-panel=\"p4\"]'))"> Radial — All →</button></div>
+</div>
 
   <div class="dp" id="p4">
     <div class="pey">Programme Analysis · 04</div>
@@ -671,21 +704,27 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
         <div class="dbox" id="rd1" style="margin-top:14px">Click a node to inspect.</div>
       </div>
     </div>
-  </div>
+  
+  <div class="panel-nav"><button class="pnav-btn" onclick="showPanel('p3',document.querySelector('.dnb[data-panel=\"p3\"]'))">← Radial — Programme</button><span class="pnav-label">4 / 7</span><button class="pnav-btn" onclick="showPanel('p5',document.querySelector('.dnb[data-panel=\"p5\"]'))"> LCI →</button></div>
+</div>
 
   <div class="dp" id="p5">
     <div class="pey">Landscape Analysis · 05</div>
     <div class="ptitle">Landscape Connectivity Index — LCI</div>
     <div class="pdesc">LCI = Programme Linkage (0.30) · Historical Axis Alignment (0.25) · Threshold Quality (0.20) · Microclimate (0.15) · Sequence Legibility (0.10)<br>In GH: LCI drives path intersection density, temple radial contour alignment, column spacing along circulation.</div>
     <div id="lciWrap"></div>
-  </div>
+  
+  <div class="panel-nav"><button class="pnav-btn" onclick="showPanel('p4',document.querySelector('.dnb[data-panel=\"p4\"]'))">← Radial — All</button><span class="pnav-label">5 / 7</span><button class="pnav-btn" onclick="showPanel('p6',document.querySelector('.dnb[data-panel=\"p6\"]'))"> SAI × SCI →</button></div>
+</div>
 
   <div class="dp" id="p6">
     <div class="pey">Service Analysis · 06</div>
     <div class="ptitle">Service — SAI × SCI</div>
     <div class="pdesc"><strong>SAI</strong>: multi-zone reach 0.35 · priority distance 0.30 · invisibility 0.20 · peak access 0.15<br><strong>SCI</strong>: dependency count 0.40 · substitutability(inv) 0.35 · failure radius 0.25<br>High SCI + Low SAI = GH warning (critical but inaccessible).</div>
     <div id="svcWrap"></div>
-  </div>
+  
+  <div class="panel-nav"><button class="pnav-btn" onclick="showPanel('p5',document.querySelector('.dnb[data-panel=\"p5\"]'))">← LCI</button><span class="pnav-label">6 / 7</span><button class="pnav-btn" onclick="showPanel('p7',document.querySelector('.dnb[data-panel=\"p7\"]'))"> PPI →</button></div>
+</div>
 
   <!-- ═══ Panel 7: PPI ═══ -->
   <div class="dp" id="p7">
@@ -795,6 +834,8 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
     <span>ETI weights: V·0.30 D·0.25 F·0.18 U·0.15 O·0.12 · Inhibitors: H×0.6 S×0.4</span>
     <span>Relational distance weights: V·0.35 D·0.35 F·0.05 U·0.10 O·0.15</span>
   </div>
+
+  <div class="panel-nav"><button class="pnav-btn" onclick="showPanel('p6',document.querySelector('.dnb[data-panel=\"p6\"]'))">← SAI × SCI</button><span class="pnav-label">7 / 7</span><span></span></div>
 </div>
 
 <script>
@@ -1139,9 +1180,26 @@ function buildSvc(){
   });
 }
 
+function navPanel(dir){
+  const panels=['p1','p2','p3','p4','p5','p6','p7'];
+  const cur=document.querySelector('.dp.active');
+  const idx=panels.indexOf(cur?cur.id:'p1');
+  const next=panels[Math.max(0,Math.min(panels.length-1,idx+dir))];
+  const btn=document.querySelector('.dnb[data-panel="'+next+'"]');
+  showPanel(next,btn);
+}
 function showPanel(id,btn){
   document.querySelectorAll('.dp').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.dnb').forEach(b=>b.classList.remove('active'));
+  // Update panel counter
+  const _panels=['p1','p2','p3','p4','p5','p6','p7'];
+  const _idx=_panels.indexOf(id);
+  const _ctr=document.getElementById('panelCounter');
+  if(_ctr) _ctr.textContent=(_idx+1)+'/'+_panels.length;
+  const _prev=document.getElementById('prevPanelBtn');
+  const _next=document.getElementById('nextPanelBtn');
+  if(_prev) _prev.style.opacity=_idx===0?'0.3':'1';
+  if(_next) _next.style.opacity=_idx===_panels.length-1?'0.3':'1';
   document.getElementById(id).classList.add('active');
   if(btn)btn.classList.add('active');
   if(id==='p7') document.dispatchEvent(new Event('p7open'));
