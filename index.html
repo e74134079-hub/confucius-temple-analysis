@@ -312,6 +312,63 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
 }
 .lb-close:hover{color:#fff;border-color:rgba(255,255,255,.5);}
 
+/* ── THESIS TOP NAV ── */
+.to-topnav{
+  position:sticky;top:0;z-index:10;
+  background:rgba(255,255,255,.95);backdrop-filter:blur(4px);
+  border-bottom:.5px solid var(--g20);
+  padding:0 var(--to-pad,48px);
+  display:flex;align-items:center;gap:0;flex-wrap:nowrap;
+  overflow-x:auto;scrollbar-width:none;height:44px;
+}
+.to-topnav::-webkit-scrollbar{display:none;}
+.to-topnav-group{display:flex;align-items:center;gap:2px;flex-shrink:0;}
+.to-topnav-sep{width:.5px;height:20px;background:var(--g20);margin:0 10px;flex-shrink:0;}
+.to-topnav-label{font-family:var(--mono);font-size:8px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--g40);margin-right:6px;flex-shrink:0;}
+.to-tnb{
+  font-family:var(--mono);font-size:10px;color:var(--g60);
+  background:none;border:none;cursor:pointer;
+  padding:0 9px;height:28px;border-radius:14px;
+  white-space:nowrap;flex-shrink:0;transition:all .12s;
+}
+.to-tnb:hover{background:var(--g10);color:var(--ink);}
+.to-tnb--active{background:var(--ink);color:var(--w);}
+
+/* ── LANDING FOOTER BUTTONS ── */
+.lfoot{padding-top:24px;border-top:.5px solid var(--g10);}
+.lf-btns{display:flex;flex-direction:column;gap:8px;}
+.lf-btn{
+  font-family:var(--mono);font-size:12px;letter-spacing:.04em;
+  color:var(--g60);background:none;
+  border:.5px solid var(--g20);border-radius:2px;
+  padding:11px 18px;cursor:pointer;text-decoration:none;
+  display:block;text-align:left;width:100%;
+  transition:all .15s;
+}
+.lf-btn:hover,.lf-btn:focus{color:var(--ink);border-color:var(--ink);}
+.lf-btn--primary{
+  background:var(--ink);color:var(--w);border-color:var(--ink);
+}
+.lf-btn--primary:hover{opacity:.85;color:var(--w);}
+.lf-group{position:relative;}
+.aac-sub{
+  display:none;flex-direction:column;
+  border:.5px solid var(--g20);border-top:none;border-radius:0 0 2px 2px;
+  overflow:hidden;
+}
+.aac-sub.open{display:flex;}
+.aac-item{
+  font-family:var(--mono);font-size:11px;
+  background:none;border:none;border-top:.5px solid var(--g10);
+  padding:10px 18px;cursor:pointer;text-align:left;
+  color:var(--g60);display:flex;align-items:center;gap:10px;
+  transition:background .12s,color .12s;
+}
+.aac-item:first-child{border-top:none;}
+.aac-item:hover{background:var(--g10);color:var(--ink);}
+.aac-num{font-size:9px;color:var(--g40);min-width:16px;}
+
 /* ── PANEL BOTTOM NAV ── */
 .panel-nav{
   display:flex;align-items:center;justify-content:space-between;
@@ -495,25 +552,36 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
     </div>
 
     <div class="lfoot">
-      <span>ETI · LCI · SAI×SCI · MDS 2D</span>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <a href="https://e74134079-hub.github.io/confucius-survey/" target="_blank"
-           style="font-family:var(--mono);font-size:11px;color:var(--g60);
-                  text-decoration:none;border:.5px solid var(--g20);
-                  padding:7px 14px;border-radius:2px;"
-           onmouseover="this.style.color='var(--ink)';this.style.borderColor='var(--g60)'"
-           onmouseout="this.style.color='var(--g60)';this.style.borderColor='var(--g20)'">
-          公眾調查 ↗
+      <div class="lf-btns">
+
+        <!-- ① All about Con -->
+        <div class="lf-group" id="aacGroup">
+          <button class="lf-btn lf-btn--primary" onclick="toggleAAC()">
+            All about Con <span id="aacArrow">↓</span>
+          </button>
+          <div class="aac-sub" id="aacSub">
+            <button class="aac-item" onclick="openTemple();closeAAC()">
+              <span class="aac-num">01</span>Design Process
+            </button>
+            <button class="aac-item" onclick="openTemple();closeAAC();scrollToAnalysis()">
+              <span class="aac-num">02</span>Analysis
+            </button>
+            <button class="aac-item" onclick="openTemple();closeAAC();scrollToFuture()">
+              <span class="aac-num">03</span>Imagining Future
+            </button>
+          </div>
+        </div>
+
+        <!-- ② Public Survey -->
+        <a class="lf-btn" href="https://e74134079-hub.github.io/confucius-survey/" target="_blank">
+          Public Survey ↗
         </a>
-        <button onclick="openYK()"
-          style="font-family:var(--mono);font-size:11px;color:var(--g60);
-                 background:none;border:.5px solid var(--g20);
-                 padding:7px 14px;border-radius:2px;cursor:pointer;transition:all .15s;"
-          onmouseover="this.style.color='var(--ink)';this.style.borderColor='var(--g60)'"
-          onmouseout="this.style.color='var(--g60)';this.style.borderColor='var(--g20)'">
-          有孔繞繞 ↗
+
+        <!-- ③ To Arch or Not to Arch -->
+        <button class="lf-btn" onclick="openYK()">
+          To Arch or Not to Arch.
         </button>
-        <button class="enter-btn" onclick="openDash('p1')">Enter →</button>
+
       </div>
     </div>
   </div>
@@ -534,8 +602,28 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
 <div id="templeOverlay">
   <button class="tclose" onclick="closeTemple()">← Back</button>
 
+  <!-- THESIS TOP NAV -->
+  <div class="to-topnav">
+    <div class="to-topnav-group">
+      <span class="to-topnav-label">Content</span>
+      <button class="to-tnb to-tnb--active" onclick="scrollTO('to-design')">Design Process</button>
+      <button class="to-tnb" onclick="scrollTO('to-analysis')">Analysis</button>
+      <button class="to-tnb" onclick="scrollTO('to-future')">Imagining Future</button>
+    </div>
+    <div class="to-topnav-sep"></div>
+    <div class="to-topnav-group">
+      <span class="to-topnav-label">Panels</span>
+      <button class="to-tnb" onclick="closeTemple();openDash('p1')">ETI</button>
+      <button class="to-tnb" onclick="closeTemple();openDash('p2')">Matrix</button>
+      <button class="to-tnb" onclick="closeTemple();openDash('p3')">Radial</button>
+      <button class="to-tnb" onclick="closeTemple();openDash('p5')">LCI</button>
+      <button class="to-tnb" onclick="closeTemple();openDash('p6')">SAI</button>
+      <button class="to-tnb" onclick="closeTemple();openDash('p7')">PPI</button>
+    </div>
+  </div>
+
   <!-- 1. THESIS: 3 columns — ZH / EN / Aura Timeline -->
-  <div class="to-thesis">
+  <div class="to-thesis" id="to-design">
     <span class="etag">Site — Tainan Confucius Temple · The Modernity of Tradition</span>
 
     <!-- Left col 1: Chinese -->
@@ -611,6 +699,7 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
     </div><!-- /aura col -->
   </div><!-- /thesis -->
 
+  <div id="to-future" style="scroll-margin-top:52px;"></div>
   <!-- 2. BENJAMIN QUOTE + COLLAGE -->
   <div class="to-bq">
     <div class="bq-left">
@@ -2058,6 +2147,33 @@ function p7InitS3(){
   </div>
 </div>
 <script>
+
+function toggleAAC(){
+  var sub=document.getElementById('aacSub');
+  var arrow=document.getElementById('aacArrow');
+  var open=sub.classList.toggle('open');
+  arrow.textContent=open?'↑':'↓';
+}
+function closeAAC(){
+  document.getElementById('aacSub').classList.remove('open');
+  document.getElementById('aacArrow').textContent='↓';
+}
+function scrollTO(id){
+  var el=document.getElementById(id);
+  if(el) el.scrollIntoView({behavior:'smooth'});
+}
+function scrollToAnalysis(){
+  setTimeout(function(){
+    var el=document.getElementById('to-analysis');
+    if(el) el.scrollIntoView({behavior:'smooth'});
+  },300);
+}
+function scrollToFuture(){
+  setTimeout(function(){
+    var el=document.getElementById('to-future');
+    if(el) el.scrollIntoView({behavior:'smooth'});
+  },300);
+}
 function openYK(){document.getElementById('yk-overlay').classList.add('show');document.body.style.overflow='hidden';}
 function closeYK(){document.getElementById('yk-overlay').classList.remove('show');document.body.style.overflow='';}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeYK();});
