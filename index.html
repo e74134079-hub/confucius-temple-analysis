@@ -337,14 +337,15 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
 
 /* ── LANDING FOOTER BUTTONS ── */
 .lfoot{padding-top:24px;border-top:.5px solid var(--g10);}
-.lf-btns{display:flex;flex-direction:column;gap:8px;}
+.lf-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:20px;}
+.lf-group{display:contents;}
 .lf-btn{
-  font-family:var(--mono);font-size:12px;letter-spacing:.04em;
+  font-family:var(--mono);font-size:10px;letter-spacing:.04em;
   color:var(--g60);background:none;
   border:.5px solid var(--g20);border-radius:2px;
-  padding:11px 18px;cursor:pointer;text-decoration:none;
+  padding:9px 12px;cursor:pointer;text-decoration:none;
   display:block;text-align:left;width:100%;
-  transition:all .15s;
+  transition:all .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .lf-btn:hover,.lf-btn:focus{color:var(--ink);border-color:var(--ink);}
 .lf-btn--primary{
@@ -354,8 +355,10 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
 .lf-group{position:relative;}
 .aac-sub{
   display:none;flex-direction:column;
+  position:absolute;top:100%;left:0;right:0;z-index:50;
   border:.5px solid var(--g20);border-top:none;border-radius:0 0 2px 2px;
-  overflow:hidden;
+  overflow:hidden;background:var(--w);
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
 }
 .aac-sub.open{display:flex;}
 .aac-item{
@@ -459,6 +462,7 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
   /* sm-row: 直排 */
   .sm-row { flex-direction: column; gap: 6px; }
   .smb    { width: 100%; font-size: 12px; padding: 10px 14px; }
+  .lf-row { grid-template-columns: 1fr; }
 
   /* footer */
   .lfoot        { padding-top: 16px; }
@@ -525,6 +529,34 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
     <div class="ltitle">The Modernity of Tradition</div>
     <div class="lsub">Tainan Confucius Temple · Programme Analysis<br>ETI · Relational Distance · Relationship Matrix · Radial Diagram</div>
 
+    <div class="lf-row">
+      <!-- All about Con -->
+      <div class="lf-group" id="aacGroup" style="position:relative;">
+        <button class="lf-btn lf-btn--primary" onclick="toggleAAC()">
+          All about Con <span id="aacArrow">↓</span>
+        </button>
+        <div class="aac-sub" id="aacSub">
+          <button class="aac-item" onclick="openTemple();closeAAC()">
+            <span class="aac-num">01</span>Design Process
+          </button>
+          <button class="aac-item" onclick="openTemple();closeAAC();scrollToAnalysis()">
+            <span class="aac-num">02</span>Analysis
+          </button>
+          <button class="aac-item" onclick="openTemple();closeAAC();scrollToFuture()">
+            <span class="aac-num">03</span>Imagining Future
+          </button>
+        </div>
+      </div>
+      <!-- Public Survey -->
+      <a class="lf-btn" href="https://e74134079-hub.github.io/confucius-survey/" target="_blank">
+        Public Survey ↗
+      </a>
+      <!-- To Arch or Not to Arch -->
+      <button class="lf-btn" onclick="openYK()">
+        To Arch or Not to Arch.
+      </button>
+    </div>
+
     <div class="sec-label">Programme Analysis</div>
     <div class="prog-grid">
       <button class="pb" onclick="openDash('p1')">
@@ -551,39 +583,7 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
       <button class="smb" onclick="openDash('p6')"><span class="dot" style="background:var(--D)"></span>SAI × SCI · Serves Matrix</button>
     </div>
 
-    <div class="lfoot">
-      <div class="lf-btns">
 
-        <!-- ① All about Con -->
-        <div class="lf-group" id="aacGroup">
-          <button class="lf-btn lf-btn--primary" onclick="toggleAAC()">
-            All about Con <span id="aacArrow">↓</span>
-          </button>
-          <div class="aac-sub" id="aacSub">
-            <button class="aac-item" onclick="openTemple();closeAAC()">
-              <span class="aac-num">01</span>Design Process
-            </button>
-            <button class="aac-item" onclick="openTemple();closeAAC();scrollToAnalysis()">
-              <span class="aac-num">02</span>Analysis
-            </button>
-            <button class="aac-item" onclick="openTemple();closeAAC();scrollToFuture()">
-              <span class="aac-num">03</span>Imagining Future
-            </button>
-          </div>
-        </div>
-
-        <!-- ② Public Survey -->
-        <a class="lf-btn" href="https://e74134079-hub.github.io/confucius-survey/" target="_blank">
-          Public Survey ↗
-        </a>
-
-        <!-- ③ To Arch or Not to Arch -->
-        <button class="lf-btn" onclick="openYK()">
-          To Arch or Not to Arch.
-        </button>
-
-      </div>
-    </div>
   </div>
 
   <!-- RIGHT: Figure Ground -->
