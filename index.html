@@ -462,7 +462,11 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
   /* sm-row: 直排 */
   .sm-row { flex-direction: column; gap: 6px; }
   .smb    { width: 100%; font-size: 12px; padding: 10px 14px; }
-  .lf-row { grid-template-columns: 1fr; }
+  /* lf-row 維持 3 欄，縮小字體與間距 */
+  .lf-row { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .lf-btn { font-size: 9px; padding: 8px 8px; letter-spacing:.02em; }
+  .aac-num { display: none; }
+  .aac-item { font-size: 9px; padding: 8px 10px; }
 
   /* footer */
   .lfoot        { padding-top: 16px; }
