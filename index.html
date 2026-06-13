@@ -556,6 +556,12 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
   /* Back button */
   .tclose { top: 10px; right: 12px; font-size: 10px; padding: 5px 10px; }
 
+@media (max-width: 768px) {
+  #mobileBack { display: flex !important; align-items: center; }
+  /* hide the wordmark on mobile to save space */
+  .dw { display: none; }
+}
+
 @media (max-width: 480px) {
   .ltitle  { font-size: 22px; }
   .lb-grid { grid-template-columns: 1fr !important; }
@@ -783,6 +789,7 @@ body{font-family:var(--acumin);font-size:var(--fs-body);background:var(--w);colo
 <!-- ═══ DASHBOARD ═══ -->
 <div id="dashboard">
   <div class="dh">
+    <button id="mobileBack" onclick="backToLanding()" style="display:none;">← Overview</button>
     <span class="dw">Confucius Temple — Programme Analysis</span>
     <span class="dsep">Programme</span>
     <button class="dnb active" data-panel="p1" onclick="showPanel('p1',this)">① ETI + Distance</button>
